@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
 
-namespace E_commerce.Infrastructure.Data.Migrations
+namespace E_commerce.Infrastructure.Migrations
 {
     [DbContext(typeof(StoreDBContext))]
     partial class StoreDBContextModelSnapshot : ModelSnapshot
@@ -29,10 +29,13 @@ namespace E_commerce.Infrastructure.Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<int>("BrandId")
+                        .HasColumnType("int");
+
                     b.Property<string>("Description")
                         .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -47,17 +50,14 @@ namespace E_commerce.Infrastructure.Data.Migrations
                     b.Property<decimal>("Price")
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<int>("ProductBrandId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("ProductTypeId")
+                    b.Property<int>("TypeId")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ProductBrandId");
+                    b.HasIndex("BrandId");
 
-                    b.HasIndex("ProductTypeId");
+                    b.HasIndex("TypeId");
 
                     b.ToTable("Products");
                 });
@@ -100,13 +100,13 @@ namespace E_commerce.Infrastructure.Data.Migrations
                 {
                     b.HasOne("E_commerce.Domain.Entities.Products.ProductBrand", "ProductBrand")
                         .WithMany()
-                        .HasForeignKey("ProductBrandId")
+                        .HasForeignKey("BrandId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("E_commerce.Domain.Entities.Products.ProductType", "ProductType")
                         .WithMany()
-                        .HasForeignKey("ProductTypeId")
+                        .HasForeignKey("TypeId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 

@@ -15,11 +15,11 @@ namespace E_commerce.Infrastructure.Configurations
         {
             builder.HasOne(x => x.ProductBrand)
                  .WithMany()
-                 .HasForeignKey(x => x.ProductBrandId);
+                 .HasForeignKey(x => x.BrandId);
 
             builder.HasOne(x => x.ProductType)
                     .WithMany()
-                    .HasForeignKey(x => x.ProductTypeId);
+                    .HasForeignKey(x => x.TypeId);
 
             builder.Property(x=>x.Price)
                 .HasColumnType("decimal(18,2)");
@@ -30,7 +30,7 @@ namespace E_commerce.Infrastructure.Configurations
 
 
             builder.Property(x=>x.Description)
-                   .HasMaxLength(100);
+                   .HasMaxLength(200);
 
             builder.Property(x=>x.PictureUrl)
                    .HasMaxLength(200);

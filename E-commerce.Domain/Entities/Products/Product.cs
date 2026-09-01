@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace E_commerce.Domain.Entities.Products
@@ -17,8 +18,10 @@ namespace E_commerce.Domain.Entities.Products
 
 
         //FK
-        public int ProductTypeId { get; set; }
-        public int ProductBrandId { get; set; }
+       
+        public int TypeId { get; set; }
+       
+        public int BrandId { get; set; }
 
         //Navigation properties
         public ProductType ProductType { get; set; } = default!;

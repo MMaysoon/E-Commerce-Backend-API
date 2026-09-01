@@ -1,4 +1,6 @@
-﻿using E_commerce.Infrastructure.Data;
+﻿using E_commerce.Domain.Contracts;
+using E_commerce.Infrastructure.Data;
+using E_commerce.Infrastructure.Seeding;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -14,10 +16,15 @@ namespace E_commerce.Infrastructure
     {
         public static IServiceCollection AddInfrastructureServices(this IServiceCollection services, IConfiguration configuration)
         {
+            // DBContext
            services.AddDbContext<StoreDBContext>(options =>
            {
                 options.UseSqlServer(configuration.GetConnectionString("DefaultConnection"));
            });
+
+            //DataSeeder
+            services.AddKeyedScoped<IDataSeeder, CatalogDataSeeder>("Catalog");
+
 
             return services;
         }
