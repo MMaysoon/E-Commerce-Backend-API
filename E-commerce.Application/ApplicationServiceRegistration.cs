@@ -1,4 +1,6 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using E_commerce.Application.IServices;
+using E_commerce.Application.Services;
+using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,6 +18,8 @@ namespace E_commerce.Application
             services.AddAutoMapper(cfg=> { },typeof(ApplicationServiceRegistration).Assembly);
 
             //Dependency Injection
+            services.AddScoped<IProductService, ProductService>();
+                   
             return services;
         }
     }

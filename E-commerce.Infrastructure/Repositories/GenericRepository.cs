@@ -12,11 +12,11 @@ namespace E_commerce.Infrastructure.Repositories
 {
     public class GenericRepository<TEntity, TKey>(StoreDBContext dBContext) : IGenericRepository<TEntity, TKey> where TEntity : BaseEntity<TKey>
     {
-        public async Task<IEnumerable<TEntity>> GetAllAsync()
-          => await dBContext.Set<TEntity>().ToListAsync();
+        public async Task<IEnumerable<TEntity>> GetAllAsync(CancellationToken ct = default)
+          => await dBContext.Set<TEntity>().ToListAsync(ct);
 
-        public async Task<TEntity?> GetByIdAsync(TKey id)
-            => await dBContext.Set<TEntity>().FindAsync(id);
+        public async Task<TEntity?> GetByIdAsync(TKey id, CancellationToken ct = default)
+            => await dBContext.Set<TEntity>().FindAsync(id,ct);
 
         public void Add(TEntity entity)
             => dBContext.Set<TEntity>().Add(entity);
