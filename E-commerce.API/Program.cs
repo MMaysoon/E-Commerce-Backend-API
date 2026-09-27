@@ -1,5 +1,6 @@
 using E_commerce.API.Extensions;
 using E_commerce.Application;
+using E_commerce.Application.Profiles;
 using E_commerce.Infrastructure;
 
 namespace E_commerce.API
@@ -17,6 +18,7 @@ namespace E_commerce.API
             #region Apply Services 
             builder.Services.AddApplicationServices();
             builder.Services.AddInfrastructureServices(builder.Configuration);
+            builder.Services.Configure<UrlSettings>(builder.Configuration.GetSection("UrlSettings"));
             #endregion
             // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
             builder.Services.AddOpenApi();
