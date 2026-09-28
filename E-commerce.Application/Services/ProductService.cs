@@ -48,6 +48,19 @@ namespace E_commerce.Application.Services
 
         }
 
+        public async Task<Result<IReadOnlyList<ProductDto>>> GetAllProductsUsingSearchAsync(ProductQueryParams queryParams,CancellationToken ct = default)
+        {
+           
+            var spec = new ProductWithBrandAndTypeSpecifications(queryParams);
+            var repo = unitOfWork.GetRepository<Product, int>();
+            var products = await repo.GetAllAsync(spec, ct);
+            var data = mapper.Map<IReadOnlyList<ProductDto>>(products);
+            return Result<IReadOnlyList<ProductDto>>.Ok(data);
+
+
+        }
+
+
         public async Task<Result<IReadOnlyList<TypeDto>>> GetAllTypesAsync(CancellationToken ct = default)
         {
             var types = await unitOfWork.GetRepository<ProductType, int>().GetAllAsync(ct);

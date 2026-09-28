@@ -34,20 +34,20 @@ namespace E_commerce.Infrastructure.Repositories
         {
             #region 1'st Way 
             // 1. Get the DbSet for the entity type
-            IQueryable<TEntity> query = dBContext.Set<TEntity>();
+            //IQueryable<TEntity> query = dBContext.Set<TEntity>();
 
-            // 2. Apply Include expressions from the specification
-            if (spec != null)
-            {
-                foreach (var expression in spec.IncludeExpressions)
-                {
-                    // Apply the Include expression to the query
-                    query = query.Include(expression);
-                }
-            }
+            //// 2. Apply Include expressions from the specification
+            //if (spec != null)
+            //{
+            //    foreach (var expression in spec.IncludeExpressions)
+            //    {
+            //        // Apply the Include expression to the query
+            //        query = query.Include(expression);
+            //    }
+            //}
 
-            // 3. Execute the query
-            return await query.ToListAsync(ct);
+            //// 3. Execute the query
+            //return await query.ToListAsync(ct);
             #endregion
 
             #region 2'nd Way (using SpecificationEvaluator)
