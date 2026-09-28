@@ -9,7 +9,11 @@ namespace E_commerce.Domain.Contracts
 {
     public interface IGenericRepository<TEntity,TKey> where TEntity : BaseEntity<TKey>
     {
+
         Task<TEntity?> GetByIdAsync(TKey id, CancellationToken ct = default);
+
+        // Get by Id using Specification DP
+        Task<TEntity?> GetByIdAsync(ISpecfications<TEntity,TKey> spec, CancellationToken ct = default);
         Task<IEnumerable<TEntity>> GetAllAsync(CancellationToken ct=default);
 
         // Get All using Specification DP

@@ -14,8 +14,14 @@ namespace E_commerce.Application.Specifications
         public static IQueryable<TEntity> CreateQuery <TEntity,TKey>(IQueryable<TEntity> inputQuery, ISpecfications<TEntity, TKey> spec) where TEntity :BaseEntity<TKey>
         {
             var query = inputQuery;
-           
-            //1.Include 
+
+            //1.Criteria
+            if (spec.Criteria is  not null)
+            {
+                query = query.Where(spec.Criteria);
+            }
+
+            //2.Include 
             if (spec.IncludeExpressions.Any())
                 query=spec.IncludeExpressions.Aggregate(query, (current, include) => current.Include(include));
 

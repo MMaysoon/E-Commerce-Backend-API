@@ -28,6 +28,8 @@ namespace E_commerce.Infrastructure.Repositories
         public void Update(TEntity entity)
            => dBContext.Set<TEntity>().Update(entity);
 
+
+        // Using Specification DP
         public async Task<IEnumerable<TEntity>> GetAllAsync(ISpecfications<TEntity, TKey>? spec, CancellationToken ct = default)
         {
             #region 1'st Way 
@@ -52,5 +54,9 @@ namespace E_commerce.Infrastructure.Repositories
             return await SpecficationEvaluator.CreateQuery(dBContext.Set<TEntity>(), spec).ToListAsync(ct);
             #endregion
         }
+
+        // Get by Id using Specification DP
+        public async Task<TEntity?> GetByIdAsync(ISpecfications<TEntity, TKey> spec, CancellationToken ct = default)
+            => await SpecficationEvaluator.CreateQuery(dBContext.Set<TEntity>(), spec).FirstOrDefaultAsync(ct);
     }
 }
