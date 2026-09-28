@@ -31,8 +31,25 @@ namespace E_commerce.Application.Specifications
             Criteria = criteria;
         }
         public Expression<Func<TEntity, bool>> Criteria { get; private set; }
-        
 
+
+        #endregion
+
+
+        #region 3.Sorting
+        public Expression<Func<TEntity, object>>? OrderBy { get; private set; }
+
+        public Expression<Func<TEntity, object>>? OrderByDesc { get; private set; }
+
+        protected void AddOrderBy(Expression<Func<TEntity, object>> orderByExpression)
+        {
+            OrderBy = orderByExpression;
+        }
+
+        protected void AddOrderByDesc(Expression<Func<TEntity, object>> orderByDescExpression)
+        {
+            OrderByDesc = orderByDescExpression;
+        }
         #endregion
     }
 }

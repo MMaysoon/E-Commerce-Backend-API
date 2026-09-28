@@ -14,6 +14,10 @@ namespace E_commerce.Domain.Contracts
         ICollection<Expression<Func<TEntity,object>>> IncludeExpressions { get; }
 
         //2.Criteria
-        Expression<Func<TEntity,bool>> Criteria { get; }
+        Expression<Func<TEntity,bool>>? Criteria { get; }
+
+        //3.Sorting 
+        Expression<Func<TEntity,object>>? OrderBy { get; }
+        Expression<Func<TEntity,object>>? OrderByDesc { get; }
     }
 }

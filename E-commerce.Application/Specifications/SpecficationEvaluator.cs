@@ -25,6 +25,18 @@ namespace E_commerce.Application.Specifications
             if (spec.IncludeExpressions.Any())
                 query=spec.IncludeExpressions.Aggregate(query, (current, include) => current.Include(include));
 
+
+            //3.Sorting 
+            if (spec.OrderBy is not null)
+            {
+                query = query.OrderBy(spec.OrderBy);
+            }
+
+            if (spec.OrderByDesc is not null)
+            {
+                query = query.OrderByDescending(spec.OrderByDesc);
+            }
+
             return query; 
         }
     }
