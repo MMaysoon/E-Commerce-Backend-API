@@ -12,6 +12,9 @@ namespace E_commerce.Domain.Contracts
         Task<TEntity?> GetByIdAsync(TKey id, CancellationToken ct = default);
         Task<IEnumerable<TEntity>> GetAllAsync(CancellationToken ct=default);
 
+        // Get All using Specification DP
+        Task<IEnumerable<TEntity>> GetAllAsync(ISpecfications<TEntity,TKey> spec,CancellationToken ct = default);
+
         void Add(TEntity entity);
 
         void Update(TEntity entity);
