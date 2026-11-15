@@ -64,13 +64,15 @@ namespace E_commerce.Application.Specifications
             ArgumentOutOfRangeException.ThrowIfLessThan(pageSize, 1);
             ArgumentOutOfRangeException.ThrowIfLessThan(pageIndex, 1);
 
-            var skip = (long)(pageIndex - 1) * pageSize;
-            if (skip > int.MaxValue)
-                throw new ArgumentOutOfRangeException(nameof(pageIndex), "The requested page exceeds the supported range.");
+            var skipCount = (long)(pageIndex - 1) * pageSize;
+
+            if (skipCount > int.MaxValue)
+                throw new ArgumentOutOfRangeException(nameof(pageIndex));
 
             isPaginated = true;
             take = pageSize;
-            skip = (int)skip;
+            skip = (int)skipCount;
+
         }
         #endregion
     }

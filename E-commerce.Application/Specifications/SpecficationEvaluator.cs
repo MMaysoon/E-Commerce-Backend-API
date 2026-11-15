@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 
 namespace E_commerce.Application.Specifications
 {
+    // convert the specification into a queryable object using (EF core )that can be executed against a data source
     public static class SpecficationEvaluator
     {
         public static IQueryable<TEntity> CreateQuery <TEntity,TKey>(IQueryable<TEntity> inputQuery, ISpecfications<TEntity, TKey> spec) where TEntity :BaseEntity<TKey>
