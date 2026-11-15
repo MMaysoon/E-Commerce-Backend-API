@@ -10,6 +10,11 @@ namespace E_commerce.Application.Common
     {
         public PaginatedResult(int pageIndex, int pageSize, int totalCount, IReadOnlyList<TEntity> data)
         {
+            ArgumentOutOfRangeException.ThrowIfLessThan(pageIndex, 1);
+            ArgumentOutOfRangeException.ThrowIfLessThan(pageSize, 1);
+            ArgumentOutOfRangeException.ThrowIfNegative(totalCount);
+            ArgumentNullException.ThrowIfNull(data);
+
             PageIndex = pageIndex;
             PageSize = pageSize;
             Count = totalCount;

@@ -20,7 +20,9 @@ namespace E_commerce.Infrastructure
             // DBContext
            services.AddDbContext<StoreDBContext>(options =>
            {
-                options.UseSqlServer(configuration.GetConnectionString("DefaultConnection"));
+                var connectionString = configuration.GetConnectionString("DefaultConnection")
+                    ?? throw new InvalidOperationException("The 'DefaultConnection' connection string is not configured.");
+                options.UseSqlServer(connectionString);
            });
 
             //DataSeeder

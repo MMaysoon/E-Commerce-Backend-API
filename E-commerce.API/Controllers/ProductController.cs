@@ -1,10 +1,8 @@
 ﻿using E_commerce.Application.Common;
 using E_commerce.Application.DTOs.Product;
 using E_commerce.Application.IServices;
-using E_commerce.Application.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using System.Reflection.Metadata.Ecma335;
 
 namespace E_commerce.API.Controllers
 {
@@ -14,7 +12,8 @@ namespace E_commerce.API.Controllers
     {
         //1.Get All
         [HttpGet]
-        [ProducesResponseType(typeof(ProductDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(PaginatedResult<ProductDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<ActionResult<PaginatedResult<ProductDto>>> GetAllProducts([FromQuery] ProductQueryParams queryParams, CancellationToken ct)
         {
             var products = await productService.GetAllProductsAsync(queryParams, ct);
@@ -23,7 +22,8 @@ namespace E_commerce.API.Controllers
 
         
         [HttpGet("Search")]
-        [ProducesResponseType(typeof(ProductDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(IReadOnlyList<ProductDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<ActionResult<IReadOnlyList<ProductDto>>> GetAllProductsusingSearch([FromQuery]ProductQueryParams queryParams ,CancellationToken ct)
         {
             var products = await productService.GetAllProductsUsingSearchAsync(queryParams, ct);

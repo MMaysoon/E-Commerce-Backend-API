@@ -12,7 +12,7 @@ namespace E_commerce.Application.DTOs.Product
         public string Name { get; set; } = default!;
         public string Description { get; set; }=default!;
 
-        public string PictureUrl { get; set; }=default!;
+        public string? PictureUrl { get; set; }
 
         public decimal Price { get; set; }
 

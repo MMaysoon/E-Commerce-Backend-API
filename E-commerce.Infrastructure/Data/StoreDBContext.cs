@@ -12,9 +12,9 @@ namespace E_commerce.Infrastructure.Data
     public class StoreDBContext(DbContextOptions<StoreDBContext>options) :DbContext(options)
     {
         #region DbSets
-        public DbSet<Product> Products { get;set; } 
-        public DbSet<ProductType> ProductTypes { get;set; } 
-        public DbSet<ProductBrand> ProductBrands { get;set; }
+        public DbSet<Product> Products => Set<Product>();
+        public DbSet<ProductType> ProductTypes => Set<ProductType>();
+        public DbSet<ProductBrand> ProductBrands => Set<ProductBrand>();
         #endregion
 
 

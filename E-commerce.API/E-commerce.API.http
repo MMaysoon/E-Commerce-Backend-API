@@ -1,6 +1,19 @@
-@E_commerce.API_HostAddress = http://localhost:5261
+@E_commerce.API_HostAddress = https://localhost:7070
 
-GET {{E_commerce.API_HostAddress}}/weatherforecast/
+GET {{E_commerce.API_HostAddress}}/api/Product
 Accept: application/json
 
 ###
+
+GET {{E_commerce.API_HostAddress}}/api/Product/Search?SearchValue=shoe&Sort=PriceAsc
+Accept: application/json
+
+###
+
+GET {{E_commerce.API_HostAddress}}/api/Product/Brands
+Accept: application/json
+
+###
+
+GET {{E_commerce.API_HostAddress}}/api/Product/Types
+Accept: application/json

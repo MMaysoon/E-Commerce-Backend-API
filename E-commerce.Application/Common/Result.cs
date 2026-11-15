@@ -12,12 +12,20 @@ namespace E_commerce.Application.Common
 
 
         // 2. Constructor
-        public Result(
+        protected Result(
             bool isSuccess,
             IReadOnlyList<Error> errors)
         {
+            ArgumentNullException.ThrowIfNull(errors);
+
+            if (isSuccess && errors.Count > 0)
+                throw new ArgumentException("A successful result cannot contain errors.", nameof(errors));
+
+            if (!isSuccess && errors.Count == 0)
+                throw new ArgumentException("A failed result must contain at least one error.", nameof(errors));
+
             IsSuccess = isSuccess;
-            Errors = errors;
+            Errors = Array.AsReadOnly(errors.ToArray());
         }
 
 
@@ -30,6 +38,7 @@ namespace E_commerce.Application.Common
         // 4. Method: Failure with one error
         public static Result Fail(Error error)
         {
+            ArgumentNullException.ThrowIfNull(error);
             return new Result(false, new[] { error });
         }
 
@@ -37,6 +46,7 @@ namespace E_commerce.Application.Common
         // 5. Method: Failure with multiple errors
         public static Result Fail(IReadOnlyList<Error> errors)
         {
+            ArgumentNullException.ThrowIfNull(errors);
             return new Result(false,errors);
         }
     }
@@ -89,6 +99,7 @@ namespace E_commerce.Application.Common
         // 7. Method: Failure with one error
         public static new Result<TValue> Fail(Error error)
         {
+            ArgumentNullException.ThrowIfNull(error);
             return new Result<TValue>(error);
         }
 
@@ -97,6 +108,7 @@ namespace E_commerce.Application.Common
         public static new Result<TValue> Fail(
             IReadOnlyList<Error> errors)
         {
+            ArgumentNullException.ThrowIfNull(errors);
             return new Result<TValue>(errors);
         }
 

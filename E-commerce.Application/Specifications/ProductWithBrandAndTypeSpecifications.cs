@@ -3,6 +3,7 @@ using E_commerce.Domain.Entities.Products;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -13,7 +14,7 @@ namespace E_commerce.Application.Specifications
 
         //Constructor to include ProductBrand and ProductType in the specification
         //Get All ( using Include)
-        public ProductWithBrandAndTypeSpecifications() : base(null)
+        public ProductWithBrandAndTypeSpecifications()
         {
             AddInclude(p => p.ProductBrand);
             AddInclude(p => p.ProductType);
@@ -28,16 +29,10 @@ namespace E_commerce.Application.Specifications
 
 
         // Get All using Search (include & Criteria & Sorting)
-        public ProductWithBrandAndTypeSpecifications(ProductQueryParams queryParams) : base
-            (p =>
-               // if chose these filtler must be applied to the query, otherwise ignore it
-               (!queryParams.BrandId.HasValue || p.BrandId == queryParams.BrandId)
-            &&
-               (!queryParams.TypeId.HasValue || p.TypeId == queryParams.TypeId)
-            &&
-               (string.IsNullOrEmpty(queryParams.SearchValue) || p.Name.Contains(queryParams.SearchValue))
-            )
+        public ProductWithBrandAndTypeSpecifications(ProductQueryParams queryParams) : base(CreateCriteria(queryParams))
         {
+            ArgumentNullException.ThrowIfNull(queryParams);
+
             AddInclude(p => p.ProductBrand);
             AddInclude(p => p.ProductType);
 
@@ -54,6 +49,22 @@ namespace E_commerce.Application.Specifications
 
             // Pagination
             ApplyPagination(queryParams.PageSize, queryParams.PageIndex);
+        }
+
+        public static Expression<Func<Product, bool>> CreateCriteria(ProductQueryParams queryParams)
+        {
+            ArgumentNullException.ThrowIfNull(queryParams);
+
+            var brandId = queryParams.BrandId;
+            var typeId = queryParams.TypeId;
+            var searchValue = string.IsNullOrWhiteSpace(queryParams.SearchValue)
+                ? null
+                : queryParams.SearchValue.Trim();
+
+            return product =>
+                (!brandId.HasValue || product.BrandId == brandId.Value)
+                && (!typeId.HasValue || product.TypeId == typeId.Value)
+                && (searchValue == null || product.Name.Contains(searchValue));
         }
     }
 

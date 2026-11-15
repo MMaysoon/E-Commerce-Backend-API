@@ -11,13 +11,17 @@ namespace E_commerce.API.Controllers
         // Errors -> Http Respone
         protected static ObjectResult ToProblem(IReadOnlyList<Error> errors)
         {
+            ArgumentNullException.ThrowIfNull(errors);
+            if (errors.Count == 0)
+                throw new ArgumentException("At least one error is required to create a problem response.", nameof(errors));
+
             var first = errors[0];
             var status = first.type switch
             {
                 ErrorType.NotFound => StatusCodes.Status404NotFound,
                 ErrorType.Validation => StatusCodes.Status400BadRequest,
                 ErrorType.Conflict => StatusCodes.Status409Conflict,
-                ErrorType.Unauthorized => StatusCodes.Status401Unauthorized,
+                ErrorType.Unauthorized or ErrorType.InvalidCredentials => StatusCodes.Status401Unauthorized,
                 ErrorType.Forbidden => StatusCodes.Status403Forbidden,
                 _ => StatusCodes.Status500InternalServerError
             };

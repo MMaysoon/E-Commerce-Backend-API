@@ -26,11 +26,11 @@ namespace E_commerce.Application.Specifications
         #region 2.Criteria (Condation)
 
         // constructor to initialize the specification with a criteria expression
-        public BaseSpecifications(Expression<Func<TEntity, bool>> criteria)
+        public BaseSpecifications(Expression<Func<TEntity, bool>>? criteria = null)
         {
             Criteria = criteria;
         }
-        public Expression<Func<TEntity, bool>> Criteria { get; private set; }
+        public Expression<Func<TEntity, bool>>? Criteria { get; }
 
 
         #endregion
@@ -61,10 +61,16 @@ namespace E_commerce.Application.Specifications
 
         protected void ApplyPagination(int pageSize , int pageIndex)
         {
-            
+            ArgumentOutOfRangeException.ThrowIfLessThan(pageSize, 1);
+            ArgumentOutOfRangeException.ThrowIfLessThan(pageIndex, 1);
+
+            var skip = (long)(pageIndex - 1) * pageSize;
+            if (skip > int.MaxValue)
+                throw new ArgumentOutOfRangeException(nameof(pageIndex), "The requested page exceeds the supported range.");
+
             isPaginated = true;
             take = pageSize;
-            skip = (pageIndex - 1) * pageSize;
+            skip = (int)skip;
         }
         #endregion
     }

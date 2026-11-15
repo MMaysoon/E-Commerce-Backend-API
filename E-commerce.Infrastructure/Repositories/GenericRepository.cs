@@ -32,7 +32,7 @@ namespace E_commerce.Infrastructure.Repositories
          => SpecficationEvaluator.CreateQuery(dBContext.Set<TEntity>(), specifications).CountAsync(cancellationToken);
 
         // Using Specification DP
-        public async Task<IEnumerable<TEntity>> GetAllAsync(ISpecfications<TEntity, TKey>? spec, CancellationToken ct = default)
+        public async Task<IEnumerable<TEntity>> GetAllAsync(ISpecfications<TEntity, TKey> spec, CancellationToken ct = default)
         {
             #region 1'st Way 
             // 1. Get the DbSet for the entity type

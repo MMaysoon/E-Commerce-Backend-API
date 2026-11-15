@@ -12,17 +12,17 @@ namespace E_commerce.Infrastructure.Repositories
     public class UnitOfWork(StoreDBContext dBContext) : IUnitOfWork
     {
 
-        private readonly Dictionary<string, object> repositories = new();
+        private readonly Dictionary<Type, object> repositories = new();
         //1.Get Repository using -> IGenericRepository
         public IGenericRepository<TEntity, TKey> GetRepository <TEntity, TKey>() where TEntity : BaseEntity<TKey>
         {
-            var typeName = typeof(TEntity).Name;
+            var entityType = typeof(TEntity);
 
-            if (repositories.TryGetValue(typeName,out object? value))
+            if (repositories.TryGetValue(entityType, out object? value))
                 return (IGenericRepository<TEntity, TKey>)value;
 
             var repo = new GenericRepository<TEntity, TKey>(dBContext);
-            repositories[typeName] = repo;
+            repositories[entityType] = repo;
             return repo;
         }
 

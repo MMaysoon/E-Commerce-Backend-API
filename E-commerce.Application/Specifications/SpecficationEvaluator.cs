@@ -13,6 +13,9 @@ namespace E_commerce.Application.Specifications
     {
         public static IQueryable<TEntity> CreateQuery <TEntity,TKey>(IQueryable<TEntity> inputQuery, ISpecfications<TEntity, TKey> spec) where TEntity :BaseEntity<TKey>
         {
+            ArgumentNullException.ThrowIfNull(inputQuery);
+            ArgumentNullException.ThrowIfNull(spec);
+
             var query = inputQuery;
 
             //1.Criteria
@@ -41,6 +44,8 @@ namespace E_commerce.Application.Specifications
             //4.Pagination
             if (spec.isPaginated)
             {
+                ArgumentOutOfRangeException.ThrowIfNegative(spec.skip);
+                ArgumentOutOfRangeException.ThrowIfLessThan(spec.take, 1);
                 query = query.Skip(spec.skip).Take(spec.take);
             }
             return query; 

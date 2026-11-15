@@ -26,6 +26,8 @@ namespace E_commerce.Application.Services
 
         public async Task<Result<PaginatedResult<ProductDto>>> GetAllProductsAsync(ProductQueryParams queryParams,CancellationToken ct = default)
         {
+            ArgumentNullException.ThrowIfNull(queryParams);
+
             //---1'st way
             //var products = await unitOfWork.GetRepository<Product,int>().GetAllAsync(ct);
 
@@ -40,8 +42,9 @@ namespace E_commerce.Application.Services
             //--------------------------
             // Get All with Specification DP
             var spec = new ProductWithBrandAndTypeSpecifications(queryParams);
-            var products = await unitOfWork.GetRepository<Product, int>().GetAllAsync(spec, ct);
-            var totalCount = await unitOfWork.GetRepository<Product, int>().CountAsync(new ProductCountSpecifications(queryParams), ct);
+            var repository = unitOfWork.GetRepository<Product, int>();
+            var products = await repository.GetAllAsync(spec, ct);
+            var totalCount = await repository.CountAsync(new ProductCountSpecifications(queryParams), ct);
             var data = mapper.Map<IReadOnlyList<ProductDto>>(products);
 
             return new PaginatedResult<ProductDto>(queryParams.PageIndex, queryParams.PageSize, totalCount, data);
@@ -50,6 +53,7 @@ namespace E_commerce.Application.Services
 
         public async Task<Result<IReadOnlyList<ProductDto>>> GetAllProductsUsingSearchAsync(ProductQueryParams queryParams,CancellationToken ct = default)
         {
+            ArgumentNullException.ThrowIfNull(queryParams);
            
             var spec = new ProductWithBrandAndTypeSpecifications(queryParams);
             var repo = unitOfWork.GetRepository<Product, int>();
@@ -70,6 +74,9 @@ namespace E_commerce.Application.Services
 
         public async Task<Result<ProductDto>> GetProductAsync(int id, CancellationToken ct = default)
         {
+            if (id < 1)
+                return Result<ProductDto>.Fail(Error.Validation("Product.InvalidId", "Product id must be greater than zero."));
+
             var spec = new ProductWithBrandAndTypeSpecifications(id);
 
             var product = await unitOfWork.GetRepository<Product, int>().GetByIdAsync(spec,ct);
