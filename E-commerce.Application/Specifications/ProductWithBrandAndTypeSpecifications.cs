@@ -50,7 +50,10 @@ namespace E_commerce.Application.Specifications
                 case ProductSortingOptions.PriceAsc: AddOrderBy(p => p.Price); break;
                 case ProductSortingOptions.PriceDesc: AddOrderByDesc(p => p.Price); break;
                 default: AddOrderBy(p => p.Id); break;
-            }     
+            }
+
+            // Pagination
+            ApplyPagination(queryParams.PageSize, queryParams.PageIndex);
         }
     }
 

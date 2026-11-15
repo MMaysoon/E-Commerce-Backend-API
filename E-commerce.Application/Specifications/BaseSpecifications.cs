@@ -51,5 +51,21 @@ namespace E_commerce.Application.Specifications
             OrderByDesc = orderByDescExpression;
         }
         #endregion
+
+        #region 4.Pagination
+        public int take { get; private set; }
+
+        public int skip { get; private set; }
+
+        public bool isPaginated { get; private set; }
+
+        protected void ApplyPagination(int pageSize , int pageIndex)
+        {
+            
+            isPaginated = true;
+            take = pageSize;
+            skip = (pageIndex - 1) * pageSize;
+        }
+        #endregion
     }
 }

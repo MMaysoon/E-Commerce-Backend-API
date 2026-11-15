@@ -28,6 +28,8 @@ namespace E_commerce.Infrastructure.Repositories
         public void Update(TEntity entity)
            => dBContext.Set<TEntity>().Update(entity);
 
+        public Task<int> CountAsync(ISpecfications<TEntity, TKey> specifications, CancellationToken cancellationToken = default)
+         => SpecficationEvaluator.CreateQuery(dBContext.Set<TEntity>(), specifications).CountAsync(cancellationToken);
 
         // Using Specification DP
         public async Task<IEnumerable<TEntity>> GetAllAsync(ISpecfications<TEntity, TKey>? spec, CancellationToken ct = default)

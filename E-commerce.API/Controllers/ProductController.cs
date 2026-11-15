@@ -15,9 +15,9 @@ namespace E_commerce.API.Controllers
         //1.Get All
         [HttpGet]
         [ProducesResponseType(typeof(ProductDto), StatusCodes.Status200OK)]
-        public async Task<ActionResult<IReadOnlyList<ProductDto>>> GetAllProducts(CancellationToken ct)
+        public async Task<ActionResult<PaginatedResult<ProductDto>>> GetAllProducts([FromQuery] ProductQueryParams queryParams, CancellationToken ct)
         {
-            var products = await productService.GetAllProductsAsync(ct);
+            var products = await productService.GetAllProductsAsync(queryParams, ct);
             return ToActionResult(products);
         }
 

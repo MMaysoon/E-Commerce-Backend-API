@@ -24,7 +24,7 @@ namespace E_commerce.Application.Services
 
         }
 
-        public async Task<Result<IReadOnlyList<ProductDto>>> GetAllProductsAsync(CancellationToken ct = default)
+        public async Task<Result<PaginatedResult<ProductDto>>> GetAllProductsAsync(ProductQueryParams queryParams,CancellationToken ct = default)
         {
             //---1'st way
             //var products = await unitOfWork.GetRepository<Product,int>().GetAllAsync(ct);
@@ -39,12 +39,12 @@ namespace E_commerce.Application.Services
 
             //--------------------------
             // Get All with Specification DP
-            var spec = new ProductWithBrandAndTypeSpecifications();
-            var repo = unitOfWork.GetRepository<Product, int>();
-            var products = await repo.GetAllAsync(spec,ct);
+            var spec = new ProductWithBrandAndTypeSpecifications(queryParams);
+            var products = await unitOfWork.GetRepository<Product, int>().GetAllAsync(spec, ct);
+            var totalCount = await unitOfWork.GetRepository<Product, int>().CountAsync(new ProductCountSpecifications(queryParams), ct);
             var data = mapper.Map<IReadOnlyList<ProductDto>>(products);
-            return Result<IReadOnlyList<ProductDto>>.Ok(data);
 
+            return new PaginatedResult<ProductDto>(queryParams.PageIndex, queryParams.PageSize, totalCount, data);
 
         }
 

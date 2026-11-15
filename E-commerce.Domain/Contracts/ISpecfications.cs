@@ -19,5 +19,11 @@ namespace E_commerce.Domain.Contracts
         //3.Sorting 
         Expression<Func<TEntity,object>>? OrderBy { get; }
         Expression<Func<TEntity,object>>? OrderByDesc { get; }
+
+        //4.Pagination
+        int take { get; }
+        int skip { get; }
+
+        bool isPaginated { get; }
     }
 }
