@@ -17,4 +17,12 @@
     <PackageReference Include="StackExchange.Redis" Version="4.0.165-alpha" />
   </ItemGroup>
 
+  <ItemGroup>
+    <EditorConfigFiles Remove="C:\Users\user\source\repos\MMaysoon\E-commerce\E-commerce.Infrastructure\Repositories\.editorconfig" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="C:\Users\user\source\repos\MMaysoon\E-commerce\E-commerce.Infrastructure\Repositories\.editorconfig" />
+  </ItemGroup>
+
 </Project>

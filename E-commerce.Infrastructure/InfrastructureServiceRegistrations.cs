@@ -39,8 +39,11 @@ namespace E_commerce.Infrastructure
                 return ConnectionMultiplexer.Connect(configuration.GetConnectionString("Redis")!);
             });
 
-            services.AddScoped<IBasketRepository, BasketRepository>();
+            services.AddScoped<IBasketRepository, BasketRepository>();  //Redis as storage -> apply in basket 
+            services.AddSingleton<ICacheRepository, CacheRepository>();  //Redis as cache
+
             #endregion
+
             return services;
         }
     }

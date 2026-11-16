@@ -1,4 +1,6 @@
-﻿using E_commerce.Application.Common;
+﻿
+using E_commerce.API.Attributes;
+using E_commerce.Application.Common;
 using E_commerce.Application.DTOs.Product;
 using E_commerce.Application.IServices;
 using Microsoft.AspNetCore.Http;
@@ -8,48 +10,64 @@ namespace E_commerce.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class ProductController(IProductService productService) : ApiBaseController
+    public class ProductController(
+        IProductService productService) : ApiBaseController
     {
-        //1.Get All
         [HttpGet]
-        [ProducesResponseType(typeof(PaginatedResult<ProductDto>), StatusCodes.Status200OK)]
+        [RedisCache(100, "products")]
+        [ProducesResponseType( typeof(PaginatedResult<ProductDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<ActionResult<PaginatedResult<ProductDto>>> GetAllProducts([FromQuery] ProductQueryParams queryParams, CancellationToken ct)
+        public async Task<ActionResult<PaginatedResult<ProductDto>>> GetAllProducts( [FromQuery] ProductQueryParams queryParams,CancellationToken ct)
         {
             var products = await productService.GetAllProductsAsync(queryParams, ct);
+
             return ToActionResult(products);
         }
 
-        
         [HttpGet("Search")]
-        [ProducesResponseType(typeof(IReadOnlyList<ProductDto>), StatusCodes.Status200OK)]
+        [RedisCache(100, "products")]
+        [ProducesResponseType( typeof(IReadOnlyList<ProductDto>),  StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<ActionResult<IReadOnlyList<ProductDto>>> GetAllProductsusingSearch([FromQuery]ProductQueryParams queryParams ,CancellationToken ct)
+        public async Task<ActionResult<IReadOnlyList<ProductDto>>> GetAllProductsUsingSearch( [FromQuery] ProductQueryParams queryParams, CancellationToken ct)
         {
-            var products = await productService.GetAllProductsUsingSearchAsync(queryParams, ct);
+            var products = await productService.GetAllProductsUsingSearchAsync( queryParams, ct);
+
             return ToActionResult(products);
         }
 
-        //2.Get By Id
         [HttpGet("{id:int}")]
-        [ProducesResponseType(typeof(ProductDto),StatusCodes.Status200OK)]
+        [RedisCache(100, "products")]
+        [ProducesResponseType( typeof(ProductDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<ActionResult<ProductDto>> GetProduct(int id ,CancellationToken ct)
+        public async Task<ActionResult<ProductDto>> GetProduct( int id,CancellationToken ct)
         {
-            var product = await productService.GetProductAsync(id,ct);
+            var product = await productService.GetProductAsync(id, ct);
             return ToActionResult(product);
         }
 
-        //3.Get Brands
         [HttpGet("Brands")]
+        [RedisCache(300, "brands")]
         public async Task<ActionResult<IReadOnlyList<BrandDto>>> GetAllBrands(CancellationToken ct)
-            =>  ToActionResult(await productService.GetAllBrandsAsync(ct));
+        {
+            return ToActionResult(  await productService.GetAllBrandsAsync(ct));
+        }
 
-
-        //4.Get types
         [HttpGet("Types")]
-        public async Task<ActionResult<IReadOnlyList<TypeDto>>> GetAllTypes(CancellationToken ct)
-            => ToActionResult(await productService.GetAllTypesAsync(ct));
+        [RedisCache(300, "types")]
+        public async Task<ActionResult<IReadOnlyList<TypeDto>>> GetAllTypes( CancellationToken ct)
+        {
+            return ToActionResult( await productService.GetAllTypesAsync(ct));
+        }
 
+        [HttpPut("{id:int}")]
+        [ProducesResponseType( typeof(ProductDto),StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<ProductDto>> UpdateProduct( int id,[FromBody] UpdateProductDto updateDto, CancellationToken ct)
+        {
+            var result = await productService.UpdateProductAsync( id, updateDto, ct);
+
+            return ToActionResult(result);
+        }
     }
 }

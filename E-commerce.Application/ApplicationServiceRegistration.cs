@@ -20,7 +20,7 @@ namespace E_commerce.Application
             //Dependency Injection
             services.AddScoped<IProductService, ProductService>();
             services.AddScoped<IBasketService, BasketService>();
-
+            services.AddScoped<ICacheService, CacheService>();
             return services;
         }
     }
