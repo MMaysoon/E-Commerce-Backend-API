@@ -13,6 +13,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="9.0.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.0" />
     <PackageReference Include="StackExchange.Redis" Version="4.0.165-alpha" />
   </ItemGroup>
@@ -23,6 +25,10 @@
 
   <ItemGroup>
     <None Include="C:\Users\user\source\repos\MMaysoon\E-commerce\E-commerce.Infrastructure\Repositories\.editorconfig" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Identity\Services\" />
   </ItemGroup>
 
 </Project>
