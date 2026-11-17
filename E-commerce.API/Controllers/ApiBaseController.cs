@@ -1,6 +1,7 @@
 ﻿using E_commerce.Application.Common;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace E_commerce.API.Controllers
 {
@@ -42,7 +43,7 @@ namespace E_commerce.API.Controllers
         {
             if (result.IsSuccess)
             {
-                return new OkObjectResult(result.Data);
+                return new OkObjectResult(result.data);
             }
 
             return ToProblem(result.Errors);
@@ -57,5 +58,9 @@ namespace E_commerce.API.Controllers
 
             return ToProblem(result.Errors);
         }
+
+        protected string GetEmailFromToken()
+         => User.FindFirstValue(ClaimTypes.Email)
+         ?? throw new UnauthorizedAccessException("No email claim found.");
     }
 }

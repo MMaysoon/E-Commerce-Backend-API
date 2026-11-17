@@ -12,9 +12,7 @@ namespace E_commerce.Application.Common
 
 
         // 2. Constructor
-        protected Result(
-            bool isSuccess,
-            IReadOnlyList<Error> errors)
+        protected Result( bool isSuccess,IReadOnlyList<Error> errors)
         {
             ArgumentNullException.ThrowIfNull(errors);
 
@@ -61,8 +59,7 @@ namespace E_commerce.Application.Common
 
 
         // 2. Property: Returns data if success
-        public TValue Data =>
-            IsSuccess
+        public TValue data =>IsSuccess
                 ? _value
                 : throw new InvalidOperationException(
                     "Cannot access data when the result is a failure.");

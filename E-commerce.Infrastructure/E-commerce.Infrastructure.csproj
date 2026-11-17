@@ -27,8 +27,4 @@
     <None Include="C:\Users\user\source\repos\MMaysoon\E-commerce\E-commerce.Infrastructure\Repositories\.editorconfig" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Identity\Services\" />
-  </ItemGroup>
-
 </Project>

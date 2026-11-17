@@ -1,13 +1,17 @@
-﻿using E_commerce.Domain.Contracts;
+﻿using E_commerce.Application.IServices;
+using E_commerce.Domain.Contracts;
 using E_commerce.Infrastructure.Data;
 using E_commerce.Infrastructure.Identity.Data;
 using E_commerce.Infrastructure.Identity.Entities;
+using E_commerce.Infrastructure.Identity.Services;
 using E_commerce.Infrastructure.Repositories;
 using E_commerce.Infrastructure.Seeding;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.IdentityModel.Tokens;
 using StackExchange.Redis;
 using System;
 using System.Collections.Generic;
@@ -48,7 +52,7 @@ namespace E_commerce.Infrastructure
             #endregion
 
             #region Identity
-            //1.IDentityDbContext
+            //IDentityDbContext
             services.AddDbContext<StoreIdentityDbContext>(options =>
             {
                 var connectionString =
@@ -64,10 +68,41 @@ namespace E_commerce.Infrastructure
                 .AddEntityFrameworkStores<StoreIdentityDbContext>()   // Configures EF Core as the storage provider using StoreIdentityDbContext
                 .AddDefaultTokenProviders();   // Registers token providers for password reset, email confirmation, etc.
 
-            //2.Seed Identity Roles
+            //Seed Identity Roles
             services.AddKeyedScoped<IDataSeeder, IdentityDataSeeder>("Identity");
 
-            
+
+            //DI Token Service , Identiyt Service
+            services.AddScoped<IIdentityService, IdentityService>();
+            services.AddScoped<ITokenService, TokenService>();
+
+            // JWT Configuration
+            var jwtSettings = configuration.GetSection("JWT").Get<JwtSettings>()
+                ?? throw new InvalidOperationException("JwtSettings is not configured.");
+
+
+            services.AddAuthentication(opt =>
+            {
+                opt.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                opt.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            }).AddJwtBearer(opt =>
+            {
+                opt.SaveToken = true;
+                opt.RequireHttpsMetadata = true;
+                opt.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true,
+                    RequireExpirationTime = true,
+                    RequireSignedTokens = true,
+                    ClockSkew = TimeSpan.Zero,
+                    ValidIssuer = jwtSettings.Issuer,
+                    ValidAudience = jwtSettings.Audience,
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.SecretKey))
+                };
+            });
             #endregion
 
             return services;
