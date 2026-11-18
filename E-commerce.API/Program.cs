@@ -2,6 +2,9 @@ using E_commerce.API.Extensions;
 using E_commerce.Application;
 using E_commerce.Application.Profiles;
 using E_commerce.Infrastructure;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.OpenApi;
+using Microsoft.OpenApi.Models;
 
 namespace E_commerce.API
 {
@@ -10,8 +13,7 @@ namespace E_commerce.API
         public static async Task Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
-            Console.WriteLine(
-    $"Program BaseUrl: [{builder.Configuration["EmailConfirmation:BaseUrl"]}]");
+            Console.WriteLine($"Program BaseUrl: [{builder.Configuration["EmailConfirmation:BaseUrl"]}]");
 
             // Add services to the container.
 
@@ -23,7 +25,13 @@ namespace E_commerce.API
             builder.Services.Configure<UrlSettings>(builder.Configuration.GetSection("UrlSettings"));
             #endregion
             // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-            builder.Services.AddOpenApi();
+
+
+            builder.Services.AddOpenApi(options =>
+            {
+                options.AddDocumentTransformer<BearerSecuritySchemeTransformer>();
+                options.AddOperationTransformer<AuthorizedOperationTransformer>();
+            });
 
            
 
@@ -47,12 +55,57 @@ namespace E_commerce.API
 
             app.UseHttpsRedirection();
 
+            app.UseAuthentication();
             app.UseAuthorization();
 
 
             app.MapControllers();
 
             app.Run();
+        }
+    }
+
+    internal sealed class BearerSecuritySchemeTransformer : IOpenApiDocumentTransformer
+    {
+        public Task TransformAsync(OpenApiDocument document,OpenApiDocumentTransformerContext context,CancellationToken cancellationToken)
+        {
+            document.Components ??= new OpenApiComponents();
+            document.Components.SecuritySchemes["Bearer"] = new OpenApiSecurityScheme
+            {
+                Type = SecuritySchemeType.Http,
+                Scheme = "bearer",
+                BearerFormat = "JWT"
+            };
+
+            return Task.CompletedTask;
+        }
+    }
+
+    internal sealed class AuthorizedOperationTransformer : IOpenApiOperationTransformer
+    {
+        public Task TransformAsync(OpenApiOperation operation,OpenApiOperationTransformerContext context, CancellationToken cancellationToken)
+        {
+            var requiresAuthorization = context.Description.ActionDescriptor.EndpointMetadata
+                .OfType<IAuthorizeData>()
+                .Any();
+
+            if (requiresAuthorization)
+            {
+                operation.Security ??= new List<OpenApiSecurityRequirement>();
+                operation.Security.Add(new OpenApiSecurityRequirement
+                {
+                    [new OpenApiSecurityScheme
+                    {
+                        Reference = new OpenApiReference
+                        {
+                            Type = ReferenceType.SecurityScheme,
+                            Id = "Bearer"
+                        }
+                    }] = Array.Empty<string>()
+                });
+            }
+
+            return Task.CompletedTask;
         }
     }
 }
