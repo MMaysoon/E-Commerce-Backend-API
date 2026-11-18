@@ -93,75 +93,7 @@ namespace E_commerce.Application.Services
             };
         }
 
-
-        //public async Task<Result<UserDto>> RegisterAsync(RegisterDto registerDto, CancellationToken cancellationToken = default)
-        //{
-        //    var result = await _identityService.CreateUserAsync(registerDto, cancellationToken);
-        //    if (!result.IsSuccess || result.data is null)
-        //        return Result<UserDto>.Fail(result.Errors);
-
-        //    return new UserDto { Email = result.data.Email, DisplayName = result.data.DisplayName, Token = "Token" };
-
-        //}
-
-
-        // Register with Email Confirmation
-        public async Task<Result<RegisterResponseDto>> RegisterAsync(RegisterDto registerDto,CancellationToken cancellationToken = default)
-        {
-            // 1. Create User
-            var userResult = await _identityService.CreateUserAsync(registerDto, cancellationToken);
-
-            if (!userResult.IsSuccess || userResult.data is null)
-                return Result<RegisterResponseDto>.Fail(userResult.Errors);
-
-            var user = userResult.data;
-
-            // 2. Generate Email Confirmation Token
-            var tokenResult = await _identityService.GenerateEmailConfirmationTokenAsync(user.Email, cancellationToken);
-
-            if (!tokenResult.IsSuccess)
-                return Result<RegisterResponseDto>.Fail(tokenResult.Errors);
-
-            // 3. Build Confirmation Link
-            var baseUrl = _emailConfirmationSettings.BaseUrl;
-
-            Console.WriteLine($"Confirmation BaseUrl: [{baseUrl}]");
-            var confirmationLink =
-                                $"{baseUrl}" +
-                                $"?userId={Uri.EscapeDataString(user.Id)}" +
-                                $"&token={Uri.EscapeDataString(tokenResult.data)}";
-
-            Console.WriteLine($"Confirmation Link: {confirmationLink}");
-
-            // 4. Prepare Email
-            var emailBody = $"""
-                            <h2>Welcome {System.Net.WebUtility.HtmlEncode(user.DisplayName)}!</h2>
-                            <p>Thank you for registering.</p>
-                            <p>Please confirm your email by clicking the link below:</p>
-                            <a href="{System.Net.WebUtility.HtmlEncode(confirmationLink)}">
-                                Confirm Email
-                            </a>
-                            """;
-
-            // 5. Send Confirmation Email
-            try
-            {
-                await _emailService.SendEmailAsync( user.Email,"Confirm Your Email",emailBody);
-            }
-            catch (Exception)
-            {
-                return Result<RegisterResponseDto>.Fail(
-                    Error.Failure(
-                        "EmailSendingFailed",
-                        "Your account was created, but confirmation email could not be sent. Please request a new confirmation email."));
-            }
-
-            return new RegisterResponseDto
-            {
-                Email = user.Email,
-                Message = "Registration successful. Please check your email to confirm your account."
-            };
-        }
+        
 
         public async Task<Result<AddressDto>> UpdateUserAddressAsync(AddressDto addressDto, string email, CancellationToken cancellationToken = default)
                 => await _identityService.UpSertAddressAsync(email, addressDto, cancellationToken);
@@ -174,6 +106,84 @@ namespace E_commerce.Application.Services
                 confirmEmailDto.UserId,
                 confirmEmailDto.Token,
                 cancellationToken);
+        }
+
+
+        private async Task<Result<RegisterResponseDto>> RegisterWithRoleAsync(RegisterDto registerDto,string? role,CancellationToken cancellationToken = default)
+        {
+            // 1. Create User
+            var userResult = await _identityService.CreateUserAsync(
+                registerDto, cancellationToken);
+
+            if (!userResult.IsSuccess || userResult.data is null)
+                return Result<RegisterResponseDto>.Fail(userResult.Errors);
+
+            var user = userResult.data;
+
+            // 2. Assign Role if provided
+            if (role is not null)
+            {
+                var roleResult = await _identityService.AddToRoleAsync(
+                    user.Id, role, cancellationToken);
+
+                if (!roleResult.IsSuccess)
+                    return Result<RegisterResponseDto>.Fail(roleResult.Errors);
+            }
+
+            // 3. Generate Confirmation Token
+            var tokenResult =
+                await _identityService.GenerateEmailConfirmationTokenAsync(
+                    user.Email, cancellationToken);
+
+            if (!tokenResult.IsSuccess)
+                return Result<RegisterResponseDto>.Fail(tokenResult.Errors);
+
+            // 4. Build Confirmation Link
+            var confirmationLink =
+                $"{_emailConfirmationSettings.BaseUrl}" +
+                $"?userId={Uri.EscapeDataString(user.Id)}" +
+                $"&token={Uri.EscapeDataString(tokenResult.data)}";
+
+            // 5. Build Email
+            var emailBody = $"""
+                <h2>Welcome {System.Net.WebUtility.HtmlEncode(user.DisplayName)}!</h2>
+                <p>Thank you for registering.</p>
+                <p>Please confirm your email by clicking the link below:</p>
+                <a href="{System.Net.WebUtility.HtmlEncode(confirmationLink)}">
+                    Confirm Email
+                </a>
+                """;
+
+            // 6. Send Email
+            try
+            {
+                await _emailService.SendEmailAsync(
+                    user.Email, "Confirm Your Email", emailBody);
+            }
+            catch (Exception)
+            {
+                return Result<RegisterResponseDto>.Fail(
+                    Error.Failure(
+                        "EmailSendingFailed",
+                        "Your account was created, but confirmation email could not be sent."));
+            }
+
+            return new RegisterResponseDto
+            {
+                Email = user.Email,
+                Message = "Registration successful. Please check your email to confirm your account."
+            };
+        }
+
+
+        public Task<Result<RegisterResponseDto>> RegisterAdminAsync(RegisterDto registerDto,CancellationToken cancellationToken = default)
+        {
+            return RegisterWithRoleAsync( registerDto, "Admin", cancellationToken);
+        }
+
+        public Task<Result<RegisterResponseDto>> RegisterSuperAdminAsync(RegisterDto registerDto,CancellationToken cancellationToken = default)
+        {
+            return RegisterWithRoleAsync(registerDto, "SuperAdmin", cancellationToken);
         }
     }
 }

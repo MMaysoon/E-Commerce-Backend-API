@@ -23,11 +23,28 @@ namespace E_commerce.API.Controllers
         public async Task<ActionResult<UserDto>> Login(LoginDto loginDto, CancellationToken cancellationToken)
             => ToActionResult(await _authenticationService.LoginAsync(loginDto, cancellationToken));
 
-        [HttpPost("register")]
-        [ProducesResponseType(typeof(UserDto), StatusCodes.Status200OK)]
+        
+        [HttpPost("register-admin")]
+        [ProducesResponseType(typeof(RegisterResponseDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<ActionResult<RegisterResponseDto>> Register(RegisterDto registerDto, CancellationToken cancellationToken)
-          => ToActionResult(await _authenticationService.RegisterAsync(registerDto, cancellationToken));
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        public async Task<ActionResult<RegisterResponseDto>> RegisterAdmin([FromBody] RegisterDto registerDto,CancellationToken cancellationToken)
+        {
+            return ToActionResult(await _authenticationService.RegisterAdminAsync(registerDto, cancellationToken));
+        }
+
+
+        
+        [HttpPost("register-superadmin")]
+        [ProducesResponseType(typeof(RegisterResponseDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        public async Task<ActionResult<RegisterResponseDto>> RegisterSuperAdmin([FromBody] RegisterDto registerDto,CancellationToken cancellationToken)
+        {
+            return ToActionResult(await _authenticationService.RegisterSuperAdminAsync( registerDto, cancellationToken));
+        }
 
         [HttpGet("emailexists")]
         public async Task<ActionResult<bool>> CheckEmail([FromQuery] string email, CancellationToken cancellationToken)

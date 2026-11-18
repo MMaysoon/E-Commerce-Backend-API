@@ -16,11 +16,12 @@ namespace E_commerce.Infrastructure.Services
    public class IdentityService :IIdentityService
    {
         private readonly UserManager<ApplicationUser> _userManager;
-        
+        private readonly RoleManager<IdentityRole> _roleManager;
 
-        public IdentityService(UserManager<ApplicationUser> userManager)
+        public IdentityService(UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager)
         {
             _userManager = userManager;
+            _roleManager = roleManager;
         }
 
         public async Task<Result<bool>> CheckPasswordAsync(string email, string password, CancellationToken cancellationToken = default)
@@ -189,6 +190,36 @@ namespace E_commerce.Infrastructure.Services
                     Error.NotFound("User not found"));
 
             return user.EmailConfirmed;
+        }
+
+
+        public async Task<Result<bool>> AddToRoleAsync(string userId,string role,CancellationToken cancellationToken = default)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+
+            if (user is null)
+                return Result<bool>.Fail(Error.NotFound("User not found"));
+
+            if (!await _roleManager.RoleExistsAsync(role))
+                return Result<bool>.Fail(
+                    Error.NotFound($"Role '{role}' does not exist"));
+
+            if (await _userManager.IsInRoleAsync(user, role))
+                return Result<bool>.Fail(
+                    Error.Failure("RoleAlreadyAssigned", "User already has this role"));
+
+            var result = await _userManager.AddToRoleAsync(user, role);
+
+            if (!result.Succeeded)
+            {
+                var errors = result.Errors
+                    .Select(e => new Error(e.Code, e.Description))
+                    .ToList();
+
+                return Result<bool>.Fail(errors);
+            }
+
+            return true;
         }
     }
 }

@@ -24,5 +24,7 @@ namespace E_commerce.Application.Contracts
 
         Task<Result<bool>> IsEmailConfirmedAsync(string email,CancellationToken cancellationToken = default);
 
+        Task<Result<bool>> AddToRoleAsync(string userId,string role,CancellationToken cancellationToken = default);
+
     }
 }

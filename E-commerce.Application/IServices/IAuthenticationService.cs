@@ -11,7 +11,11 @@ namespace E_commerce.Application.IServices
     public interface IAuthenticationService
     {
         Task<Result<UserDto>> LoginAsync(LoginDto loginDto, CancellationToken cancellationToken = default);
-        Task<Result<RegisterResponseDto>> RegisterAsync(RegisterDto registerDto, CancellationToken cancellationToken = default);
+
+        //Task<Result<RegisterResponseDto>> RegisterAsync(RegisterDto registerDto, CancellationToken cancellationToken = default);
+        Task<Result<RegisterResponseDto>> RegisterAdminAsync(RegisterDto registerDto,CancellationToken cancellationToken = default);
+
+        Task<Result<RegisterResponseDto>> RegisterSuperAdminAsync(RegisterDto registerDto, CancellationToken cancellationToken = default);
         Task<Result<bool>> CheckEmailAsync(string email, CancellationToken cancellationToken = default);
         Task<Result<AddressDto>> GetUserAddressAsync(string email, CancellationToken cancellationToken = default);
         Task<Result<AddressDto>> UpdateUserAddressAsync(AddressDto addressDto, string email, CancellationToken cancellationToken = default);
