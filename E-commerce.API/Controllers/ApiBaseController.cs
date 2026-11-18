@@ -62,5 +62,10 @@ namespace E_commerce.API.Controllers
         protected string GetEmailFromToken()
          => User.FindFirstValue(ClaimTypes.Email)
          ?? throw new UnauthorizedAccessException("No email claim found.");
+
+
+        protected string GetUserIdFromToken()
+        => User.FindFirstValue(ClaimTypes.NameIdentifier)
+        ?? throw new UnauthorizedAccessException("No user ID claim found.");
     }
 }

@@ -26,5 +26,11 @@ namespace E_commerce.Application.Contracts
 
         Task<Result<bool>> AddToRoleAsync(string userId,string role,CancellationToken cancellationToken = default);
 
+        Task<Result<string>> GeneratePasswordResetTokenAsync(string email,CancellationToken cancellationToken = default);
+
+        Task<Result<bool>> ResetPasswordAsync(string email,string token,string newPassword,CancellationToken cancellationToken = default);
+
+        Task<Result<bool>> ChangePasswordAsync(string userId, string currentPassword,string newPassword,CancellationToken cancellationToken = default);
+
     }
 }

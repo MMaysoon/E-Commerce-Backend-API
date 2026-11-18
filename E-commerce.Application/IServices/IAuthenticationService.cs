@@ -22,5 +22,11 @@ namespace E_commerce.Application.IServices
         Task<Result<UserDto>> GetCurrentUserAsync(string email, CancellationToken cancellationToken = default);
 
         Task<Result<bool>> ConfirmEmailAsync(ConfirmEmailDto confirmEmailDto, CancellationToken cancellationToken = default);
+
+        Task<Result<bool>> ForgotPasswordAsync(ForgotPasswordDto forgotPasswordDto,CancellationToken cancellationToken = default);
+
+        Task<Result<bool>> ResetPasswordAsync(ResetPasswordDto resetPasswordDto,CancellationToken cancellationToken = default);
+
+       Task<Result<bool>> ChangePasswordAsync(ChangePasswordDto changePasswordDto,string userId,CancellationToken cancellationToken = default);
     }
 }

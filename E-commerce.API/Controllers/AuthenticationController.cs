@@ -72,5 +72,39 @@ namespace E_commerce.API.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<ActionResult<bool>> ConfirmEmail([FromQuery] ConfirmEmailDto confirmEmailDto,CancellationToken cancellationToken)
             => ToActionResult(await _authenticationService.ConfirmEmailAsync(confirmEmailDto, cancellationToken));
+
+
+
+        // Forgot Password
+        [HttpPost("forgot-password")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<bool>> ForgotPassword([FromBody] ForgotPasswordDto forgotPasswordDto,CancellationToken cancellationToken)
+            => ToActionResult(await _authenticationService.ForgotPasswordAsync(forgotPasswordDto, cancellationToken));
+
+
+        // Reset Password
+        [HttpPost("reset-password")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<bool>> ResetPassword([FromBody] ResetPasswordDto resetPasswordDto,
+            CancellationToken cancellationToken)
+            => ToActionResult(await _authenticationService.ResetPasswordAsync(
+                resetPasswordDto, cancellationToken));
+
+
+        // Change Password
+        [Authorize]
+        [HttpPost("change-password")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        public async Task<ActionResult<bool>> ChangePassword([FromBody] ChangePasswordDto changePasswordDto, CancellationToken cancellationToken)
+            => ToActionResult(await _authenticationService.ChangePasswordAsync(changePasswordDto, GetUserIdFromToken(),cancellationToken));
+
+
     }
+
+
+
 }

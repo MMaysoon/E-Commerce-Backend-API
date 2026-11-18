@@ -185,5 +185,64 @@ namespace E_commerce.Application.Services
         {
             return RegisterWithRoleAsync(registerDto, "SuperAdmin", cancellationToken);
         }
+
+
+        public async Task<Result<bool>> ForgotPasswordAsync(ForgotPasswordDto forgotPasswordDto,CancellationToken cancellationToken = default)
+        {
+            var tokenResult = await _identityService.GeneratePasswordResetTokenAsync(
+                forgotPasswordDto.Email,
+                cancellationToken);
+
+            // Don't reveal whether the email exists
+            if (!tokenResult.IsSuccess)
+                return true;
+
+            var resetLink =
+                $"{_emailConfirmationSettings.BaseUrl}" +
+                $"?email={Uri.EscapeDataString(forgotPasswordDto.Email)}" +
+                $"&token={Uri.EscapeDataString(tokenResult.data)}";
+
+            var emailBody = $"""
+                <h2>Password Reset Request</h2>
+                <p>We received a request to reset your password.</p>
+                <p>Click the link below to reset it:</p>
+                <a href="{System.Net.WebUtility.HtmlEncode(resetLink)}">
+                    Reset Password
+                </a>
+                <p>If you did not request this, please ignore this email.</p>
+                """;
+
+            try
+            {
+                await _emailService.SendEmailAsync(forgotPasswordDto.Email,"Reset Your Password",emailBody);
+            }
+            catch (Exception)
+            {
+                return Result<bool>.Fail(
+                    Error.Failure("EmailSendingFailed","Password reset email could not be sent."));
+            }
+
+            return true;
+        }
+
+
+        public async Task<Result<bool>> ResetPasswordAsync(ResetPasswordDto resetPasswordDto,CancellationToken cancellationToken = default)
+        {
+            return await _identityService.ResetPasswordAsync(
+                resetPasswordDto.Email,
+                resetPasswordDto.Token,
+                resetPasswordDto.NewPassword,
+                cancellationToken);
+        }
+
+        public async Task<Result<bool>> ChangePasswordAsync(ChangePasswordDto changePasswordDto,string userId,CancellationToken cancellationToken = default)
+        {
+            return await _identityService.ChangePasswordAsync(
+                userId,
+                changePasswordDto.CurrentPassword,
+                changePasswordDto.NewPassword,
+                cancellationToken);
+        }
+
     }
 }

@@ -78,16 +78,19 @@ namespace E_commerce.Infrastructure
             services.AddScoped<IIdentityService, IdentityService>();
             services.AddScoped<ITokenService, TokenService>();
 
-            // JWT Configuration
-            var jwtSettings = configuration.GetSection("JWT").Get<JwtSettings>()
-                ?? throw new InvalidOperationException("JwtSettings is not configured.");
 
+            // JWT Configuration
+            services.Configure<JwtSettings>(configuration.GetSection("Jwt"));
+
+            var jwtSettings = configuration.GetSection("Jwt").Get<JwtSettings>()
+                ?? throw new InvalidOperationException("JwtSettings is not configured.");
 
             services.AddAuthentication(opt =>
             {
                 opt.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
                 opt.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-            }).AddJwtBearer(opt =>
+            })
+            .AddJwtBearer(opt =>
             {
                 opt.SaveToken = true;
                 opt.RequireHttpsMetadata = true;
@@ -102,7 +105,8 @@ namespace E_commerce.Infrastructure
                     ClockSkew = TimeSpan.Zero,
                     ValidIssuer = jwtSettings.Issuer,
                     ValidAudience = jwtSettings.Audience,
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.SecretKey))
+                    IssuerSigningKey = new SymmetricSecurityKey(
+                        Encoding.UTF8.GetBytes(jwtSettings.SecretKey))
                 };
             });
             #endregion

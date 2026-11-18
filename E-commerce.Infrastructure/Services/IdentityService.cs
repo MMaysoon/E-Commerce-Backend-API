@@ -221,5 +221,66 @@ namespace E_commerce.Infrastructure.Services
 
             return true;
         }
+
+        public async Task<Result<string>> GeneratePasswordResetTokenAsync(string email,CancellationToken cancellationToken = default)
+        {
+            var user = await _userManager.FindByEmailAsync(email);
+
+            if (user is null)
+                return Result<string>.Fail(
+                    Error.NotFound("User not found"));
+
+            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+
+            return token;
+        }
+
+        public async Task<Result<bool>> ResetPasswordAsync(string email,string token,string newPassword,CancellationToken cancellationToken = default)
+        {
+            var user = await _userManager.FindByEmailAsync(email);
+
+            if (user is null)
+                return Result<bool>.Fail(
+                    Error.NotFound("User not found"));
+
+            var result = await _userManager.ResetPasswordAsync(
+                user, token, newPassword);
+
+            if (!result.Succeeded)
+            {
+                var errors = result.Errors
+                    .Select(e => new Error(e.Code, e.Description))
+                    .ToList();
+
+                return Result<bool>.Fail(errors);
+            }
+
+            return true;
+        }
+
+
+        public async Task<Result<bool>> ChangePasswordAsync(string userId,string currentPassword,string newPassword,CancellationToken cancellationToken = default)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+
+            if (user is null)
+                return Result<bool>.Fail(
+                    Error.NotFound("User not found"));
+
+            var result = await _userManager.ChangePasswordAsync(
+                user, currentPassword, newPassword);
+
+            if (!result.Succeeded)
+            {
+                var errors = result.Errors
+                    .Select(e => new Error(e.Code, e.Description))
+                    .ToList();
+
+                return Result<bool>.Fail(errors);
+            }
+
+            return true;
+        }
+
     }
 }
