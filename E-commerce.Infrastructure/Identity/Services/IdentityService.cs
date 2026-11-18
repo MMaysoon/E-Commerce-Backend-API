@@ -1,6 +1,7 @@
 ﻿using E_commerce.Application.Common;
 using E_commerce.Application.DTOs.Authentication;
 using E_commerce.Application.IServices;
+using E_commerce.Infrastructure.Identity.Data;
 using E_commerce.Infrastructure.Identity.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -15,6 +16,7 @@ namespace E_commerce.Infrastructure.Identity.Services
    public class IdentityService :IIdentityService
    {
         private readonly UserManager<ApplicationUser> _userManager;
+        
 
         public IdentityService(UserManager<ApplicationUser> userManager)
         {
@@ -71,10 +73,17 @@ namespace E_commerce.Infrastructure.Identity.Services
 
         public async Task<Result<AddressDto>> GetAddressByEmailAsync(string email, CancellationToken cancellationToken = default)
         {
+
+            // used when needed user with related data (Address) using Include
             var user = await _userManager.Users
                              .Include(u => u.Address)
                              .FirstOrDefaultAsync(u => u.Email == email, cancellationToken);
+              //====
+             //var user2= await _context.Users
+             //                .Include(u => u.Address)
+             //                .FirstOrDefaultAsync(u => u.Email == email, cancellationToken);
 
+            
             if (user == null) return Result<AddressDto>.Fail(Error.NotFound($"User '{email}' not found"));
 
             if (user?.Address == null) return Result<AddressDto>.Fail(Error.NotFound("Address Not Found"));

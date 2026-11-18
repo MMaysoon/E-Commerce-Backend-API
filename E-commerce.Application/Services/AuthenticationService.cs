@@ -59,8 +59,9 @@ namespace E_commerce.Application.Services
 
             // Check Password 
             var passwordResult = await _identityService.CheckPasswordAsync(loginDto.Email, loginDto.Password, cancellationToken);
-            if (!passwordResult.IsSuccess)
-                return Result<UserDto>.Fail(Error.Unauthorized("Invalid Email or Password"));
+            // data here boolean value indicating if the password is valid or not
+            if (!passwordResult.IsSuccess || !passwordResult.data)
+                return Result<UserDto>.Fail( Error.Unauthorized("Invalid Email or Password"));
 
             var rolesResult = await _identityService.GetRolesAsync(loginDto.Email, cancellationToken);
             if (!rolesResult.IsSuccess)
