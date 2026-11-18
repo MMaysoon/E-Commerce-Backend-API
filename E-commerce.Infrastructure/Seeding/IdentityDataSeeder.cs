@@ -70,7 +70,8 @@ namespace E_commerce.Infrastructure.Seeding
                         DisplayName = "Maysoon Ahmed",
                         Email = "maysoonahmedahmed@gmail.com",
                         UserName = "Maysoon",
-                        PhoneNumber = "01551953448"
+                        PhoneNumber = "01551953448",
+                        EmailConfirmed = true
                     };
 
                     // if seed using user secerts

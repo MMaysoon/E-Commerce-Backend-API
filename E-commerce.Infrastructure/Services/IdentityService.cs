@@ -139,5 +139,56 @@ namespace E_commerce.Infrastructure.Services
 
             return addressDto;
         }
+
+
+        public async Task<Result<string>> GenerateEmailConfirmationTokenAsync(string email,CancellationToken cancellationToken = default)
+        {
+            var user = await _userManager.FindByEmailAsync(email);
+
+            if (user is null)
+                return Result<string>.Fail(
+                    Error.NotFound("User not found"));
+
+            var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+
+            return token;
+        }
+
+        public async Task<Result<bool>> ConfirmEmailAsync(string userId,string token,CancellationToken cancellationToken = default)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+
+            if (user is null)
+                return Result<bool>.Fail(
+                    Error.NotFound("User not found"));
+
+            if (user.EmailConfirmed)
+                return Result<bool>.Fail(
+                    Error.Failure("EmailConfirmed", "Email is already confirmed"));
+
+            var result = await _userManager.ConfirmEmailAsync(user, token);
+
+            if (!result.Succeeded)
+            {
+                var errors = result.Errors
+                    .Select(e => new Error(e.Code, e.Description))
+                    .ToList();
+
+                return Result<bool>.Fail(errors);
+            }
+
+            return true;
+        }
+
+        public async Task<Result<bool>> IsEmailConfirmedAsync(string email,CancellationToken cancellationToken = default)
+        {
+            var user = await _userManager.FindByEmailAsync(email);
+
+            if (user is null)
+                return Result<bool>.Fail(
+                    Error.NotFound("User not found"));
+
+            return user.EmailConfirmed;
+        }
     }
 }

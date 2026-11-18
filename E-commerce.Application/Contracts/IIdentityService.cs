@@ -18,5 +18,11 @@ namespace E_commerce.Application.Contracts
         Task<Result<AddressDto>> UpSertAddressAsync(string email, AddressDto addressDto, CancellationToken cancellationToken = default);
         Task<Result<bool>> EmailExistsAsync(string email, CancellationToken cancellationToken = default);
 
+        Task<Result<string>> GenerateEmailConfirmationTokenAsync(string email,CancellationToken cancellationToken = default);
+
+        Task<Result<bool>> ConfirmEmailAsync(string userId,string token,CancellationToken cancellationToken = default);
+
+        Task<Result<bool>> IsEmailConfirmedAsync(string email,CancellationToken cancellationToken = default);
+
     }
 }

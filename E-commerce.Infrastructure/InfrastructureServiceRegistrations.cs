@@ -1,4 +1,5 @@
 ﻿using E_commerce.Application.Contracts;
+using E_commerce.Application.settings;
 using E_commerce.Domain.Contracts;
 using E_commerce.Infrastructure.Data;
 using E_commerce.Infrastructure.Identity.Data;
@@ -109,6 +110,9 @@ namespace E_commerce.Infrastructure
 
             #region Email Service
             services.Configure<EmailSettings>( configuration.GetSection("EmailSettings"));
+
+
+            services.Configure<EmailConfirmationSettings>(configuration.GetSection("EmailConfirmation"));
 
             services.AddScoped<IEmailService, EmailService>();
             #endregion

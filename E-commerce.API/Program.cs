@@ -10,6 +10,8 @@ namespace E_commerce.API
         public static async Task Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
+            Console.WriteLine(
+    $"Program BaseUrl: [{builder.Configuration["EmailConfirmation:BaseUrl"]}]");
 
             // Add services to the container.
 
