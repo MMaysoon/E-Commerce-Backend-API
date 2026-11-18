@@ -1,11 +1,12 @@
-﻿using E_commerce.Application.IServices;
+﻿using E_commerce.Application.Contracts;
 using E_commerce.Domain.Contracts;
 using E_commerce.Infrastructure.Data;
 using E_commerce.Infrastructure.Identity.Data;
 using E_commerce.Infrastructure.Identity.Entities;
-using E_commerce.Infrastructure.Identity.Services;
 using E_commerce.Infrastructure.Repositories;
 using E_commerce.Infrastructure.Seeding;
+using E_commerce.Infrastructure.Services;
+using E_commerce.Infrastructure.Settings;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -103,6 +104,13 @@ namespace E_commerce.Infrastructure
                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.SecretKey))
                 };
             });
+            #endregion
+
+
+            #region Email Service
+            services.Configure<EmailSettings>( configuration.GetSection("EmailSettings"));
+
+            services.AddScoped<IEmailService, EmailService>();
             #endregion
 
             return services;

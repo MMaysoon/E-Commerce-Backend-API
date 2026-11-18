@@ -1,4 +1,4 @@
-﻿using E_commerce.Application.IServices;
+﻿using E_commerce.Application.Contracts;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System;
@@ -9,7 +9,7 @@ using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace E_commerce.Infrastructure.Identity.Services
+namespace E_commerce.Infrastructure.Services
 {
     public class TokenService(IOptions<JwtSettings> jwtOptions) :ITokenService
     {

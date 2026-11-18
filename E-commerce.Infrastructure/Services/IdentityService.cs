@@ -1,6 +1,6 @@
 ﻿using E_commerce.Application.Common;
+using E_commerce.Application.Contracts;
 using E_commerce.Application.DTOs.Authentication;
-using E_commerce.Application.IServices;
 using E_commerce.Infrastructure.Identity.Data;
 using E_commerce.Infrastructure.Identity.Entities;
 using Microsoft.AspNetCore.Identity;
@@ -11,7 +11,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace E_commerce.Infrastructure.Identity.Services
+namespace E_commerce.Infrastructure.Services
 {
    public class IdentityService :IIdentityService
    {

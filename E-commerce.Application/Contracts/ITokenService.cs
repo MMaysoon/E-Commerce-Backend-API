@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace E_commerce.Application.IServices
+namespace E_commerce.Application.Contracts
 {
     public interface ITokenService
     {
