@@ -8,7 +8,7 @@ namespace E_commerce.Domain.Entities.Order
 {
     public class ProductItemOrdered
     {
-        public int Id { get; set; }
+        public int Id { get; set; }  // = ProductId
 
         public string ProductName { get; set; } = default!;
 

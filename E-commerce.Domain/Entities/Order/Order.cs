@@ -14,7 +14,7 @@ namespace E_commerce.Domain.Entities.Order
             
         }
 
-        public Order(string paymentIntentId, string buyerEmail, ICollection<OrderItem> items, OrderAddress shipToAddress, DeliveryMethod deliveryMethod, decimal subTotal)
+        public Order(string buyerEmail, ICollection<OrderItem> items, OrderAddress shipToAddress, DeliveryMethod deliveryMethod, decimal subTotal, string paymentIntentId)
         {
             PaymentIntentId = paymentIntentId;
             BuyerEmail = buyerEmail;  
