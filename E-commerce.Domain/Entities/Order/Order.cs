@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace E_commerce.Domain.Entities.Order
 {
-    public class Order:BaseEntity<int>
+    public class Order:BaseEntity<Guid>
     {
         public Order()
         {
