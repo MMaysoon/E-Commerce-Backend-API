@@ -29,6 +29,7 @@ namespace E_commerce.Domain.Entities.Order
 
         public string BuyerEmail { get; set; }
 
+        //OrderDate
         public DateTimeOffset DateTimeOffset { get; private set; } = DateTimeOffset.UtcNow;
 
         public ICollection<OrderItem> Items { get; private set; } = [];
