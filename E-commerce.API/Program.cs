@@ -1,6 +1,7 @@
 using E_commerce.API.Extensions;
 using E_commerce.Application;
 using E_commerce.Application.Profiles;
+using E_commerce.Application.Settings;
 using E_commerce.Infrastructure;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.OpenApi;
@@ -23,6 +24,11 @@ namespace E_commerce.API
             builder.Services.AddApplicationServices();
             builder.Services.AddInfrastructureServices(builder.Configuration);
             builder.Services.Configure<UrlSettings>(builder.Configuration.GetSection("UrlSettings"));
+            #endregion
+
+
+            #region Payment
+            builder.Services.Configure<PaymentGatewaySettings>(builder.Configuration.GetSection("Stripe"));
             #endregion
             // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 
