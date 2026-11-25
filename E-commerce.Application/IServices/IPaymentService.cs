@@ -12,7 +12,7 @@ namespace E_commerce.Application.IServices
     {
         Task<Result<BasketDto>> CreateOrUpdatePaymentIntentAsync(string basketId, CancellationToken cancellation = default);
 
-        Task PaymentSuccessed (string PaymentIntentId);
+        Task PaymentSucceeded (string PaymentIntentId);
         Task PaymentFailed (string PaymentIntentId);
 
 

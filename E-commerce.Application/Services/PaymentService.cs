@@ -96,7 +96,7 @@ namespace E_commerce.Application.Services
             await _unitOfWork.SaveChangesAsync();
         }
 
-        public async Task PaymentSuccessed(string PaymentIntentId)
+        public async Task PaymentSucceeded(string PaymentIntentId)
         {
             var orderRepo = _unitOfWork.GetRepository<Order, Guid>();
 
