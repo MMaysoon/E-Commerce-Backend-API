@@ -40,7 +40,7 @@ namespace E_commerce.Domain.Entities.Order
 
         public int DeliveryMethodId { get;private set; }
 
-        public OrderStatus Status { get; private set; } = OrderStatus.Pending;
+        public OrderStatus Status { get; set; } = OrderStatus.Pending;
 
         public decimal SubTotal { get; private set; }
 

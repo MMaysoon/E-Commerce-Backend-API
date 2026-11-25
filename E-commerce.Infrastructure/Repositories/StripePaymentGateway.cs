@@ -22,7 +22,7 @@ namespace E_commerce.Infrastructure.Repositories
             StripeConfiguration.ApiKey = options.Value.SecretKey;
         }
 
-        public async  Task<PaymentIntentResult> CreatePaymentAsync(decimal amount, string currency, CancellationToken cancellation = default)
+        public async  Task<PaymentIntentResult> CreatePaymentIntentAsync(decimal amount, string currency, CancellationToken cancellation = default)
         {
             var options = new PaymentIntentCreateOptions
              {
@@ -35,7 +35,7 @@ namespace E_commerce.Infrastructure.Repositories
             return new PaymentIntentResult(intent.Id, intent.ClientSecret);
         }
 
-        public async Task<PaymentIntentResult> UpdatePaymentAsync(string paymentIntentId, decimal amount, CancellationToken cancellation = default)
+        public async Task<PaymentIntentResult> UpdatePaymentIntentAsync(string paymentIntentId, decimal amount, CancellationToken cancellation = default)
         {
             var options = new PaymentIntentUpdateOptions { Amount = (long)amount };
             var intent = await _paymentIntentService.UpdateAsync(paymentIntentId, options, cancellationToken:cancellation);
