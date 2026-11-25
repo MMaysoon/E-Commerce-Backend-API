@@ -28,7 +28,11 @@ namespace E_commerce.Infrastructure.Repositories
              {
                 Amount = (long)amount,
                 Currency = currency.ToLowerInvariant(),
-                AllowedPaymentMethodTypes = ["card"]
+                AutomaticPaymentMethods = new PaymentIntentAutomaticPaymentMethodsOptions
+                {
+                    Enabled = true,
+                    AllowRedirects = "never"
+                }
              };
 
             var intent = await _paymentIntentService.CreateAsync(options,cancellationToken :cancellation);
