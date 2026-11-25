@@ -121,6 +121,11 @@ namespace E_commerce.Infrastructure
             services.AddScoped<IEmailService, EmailService>();
             #endregion
 
+
+            #region Payment Gateway
+            services.AddSingleton<IPaymentGateWay,StripePaymentGateway>();
+            // Singleton because StripeConfiguration.ApiKey is a static set once at startup.
+            #endregion
             return services;
         }
     }
