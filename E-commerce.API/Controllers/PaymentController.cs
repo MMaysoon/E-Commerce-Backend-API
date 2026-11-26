@@ -1,4 +1,5 @@
-﻿using E_commerce.Application.DTOs.Baskets;
+﻿
+using E_commerce.Application.DTOs.Baskets;
 using E_commerce.Application.IServices;
 using E_commerce.Application.Settings;
 using Microsoft.AspNetCore.Authorization;
@@ -16,24 +17,35 @@ namespace E_commerce.API.Controllers
         private readonly IPaymentService _paymentService;
         private readonly PaymentGatewaySettings _stripeSettings;
 
-        public PaymentController(IPaymentService paymentService, IOptions<PaymentGatewaySettings> options)
+        public PaymentController( IPaymentService paymentService,IOptions<PaymentGatewaySettings> options)
         {
             _paymentService = paymentService;
             _stripeSettings = options.Value;
         }
 
-        [Authorize]
+        [AllowAnonymous]
         [HttpPost("{basketId}")]
         [ProducesResponseType(typeof(BasketDto), StatusCodes.Status200OK)]
-        public async Task<ActionResult<BasketDto>> CreateOrUpdatePaymentIntent(string basketId, CancellationToken cancellationToken)
-            => ToActionResult(await _paymentService.CreateOrUpdatePaymentIntentAsync(basketId, cancellationToken));
+        public async Task<ActionResult<BasketDto>> CreateOrUpdatePaymentIntent(
+            string basketId,
+            [FromHeader(Name = "X-Basket-Token")] string basketToken,
+            [FromQuery] int deliveryMethodId,
+            CancellationToken cancellationToken)
+        {
+            return ToActionResult(
+                await _paymentService.CreateOrUpdatePaymentIntentAsync(
+                    basketId,
+                    basketToken,
+                    deliveryMethodId,
+                    cancellationToken));
+        }
 
-
-
+        [AllowAnonymous]
         [HttpPost("webhook")]
         public async Task<IActionResult> StripeWebhook()
         {
-            var json = await new StreamReader(HttpContext.Request.Body).ReadToEndAsync();
+            var json = await new StreamReader(
+                HttpContext.Request.Body).ReadToEndAsync();
 
             try
             {
@@ -46,23 +58,28 @@ namespace E_commerce.API.Controllers
                 {
                     case EventTypes.PaymentIntentSucceeded:
 
-                        var succeededPaymentIntent = stripeEvent.Data.Object as PaymentIntent;
+                        var succeededPaymentIntent =
+                            stripeEvent.Data.Object as PaymentIntent;
 
                         if (succeededPaymentIntent is not null)
-                            await _paymentService.PaymentSucceeded(succeededPaymentIntent.Id);
+                        {
+                            await _paymentService.PaymentSucceeded(
+                                succeededPaymentIntent.Id);
+                        }
 
                         break;
 
                     case EventTypes.PaymentIntentPaymentFailed:
 
-                        var failedPaymentIntent = stripeEvent.Data.Object as PaymentIntent;
+                        var failedPaymentIntent =
+                            stripeEvent.Data.Object as PaymentIntent;
 
                         if (failedPaymentIntent is not null)
-                            await _paymentService.PaymentFailed(failedPaymentIntent.Id);
+                        {
+                            await _paymentService.PaymentFailed(
+                                failedPaymentIntent.Id);
+                        }
 
-                        break;
-
-                    default:
                         break;
                 }
 
@@ -74,5 +91,4 @@ namespace E_commerce.API.Controllers
             }
         }
     }
-
 }

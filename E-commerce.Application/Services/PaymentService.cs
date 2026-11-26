@@ -1,4 +1,5 @@
-﻿using AutoMapper;
+﻿
+using AutoMapper;
 using E_commerce.Application.Common;
 using E_commerce.Application.Contracts;
 using E_commerce.Application.DTOs.Baskets;
@@ -6,104 +7,163 @@ using E_commerce.Application.IServices;
 using E_commerce.Application.Settings;
 using E_commerce.Application.Specifications;
 using E_commerce.Domain.Contracts;
+using E_commerce.Domain.Entities.Baskets;
 using E_commerce.Domain.Entities.Order;
 using E_commerce.Domain.Entities.Products;
 using Microsoft.Extensions.Options;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace E_commerce.Application.Services
 {
-    public class PaymentService :IPaymentService
+    public class PaymentService : IPaymentService
     {
         private readonly IBasketRepository _basketRepo;
+        private readonly IBasketService _basketService;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IPaymentGateWay _paymentGateway;
         private readonly PaymentGatewaySettings _stripe;
         private readonly IMapper _mapper;
 
-        public PaymentService(IBasketRepository basketRepo, IUnitOfWork unitOfWork, IPaymentGateWay paymentGateway, IOptions<PaymentGatewaySettings> stripe, IMapper mapper)
+        public PaymentService(
+            IBasketRepository basketRepo,
+            IBasketService basketService,
+            IUnitOfWork unitOfWork,
+            IPaymentGateWay paymentGateway,
+            IOptions<PaymentGatewaySettings> stripe,
+            IMapper mapper)
         {
             _basketRepo = basketRepo;
+            _basketService = basketService;
             _unitOfWork = unitOfWork;
             _paymentGateway = paymentGateway;
             _stripe = stripe.Value;
             _mapper = mapper;
         }
 
-        public async Task<Result<BasketDto>> CreateOrUpdatePaymentIntentAsync(string basketId, CancellationToken cancellation = default)
+        public async Task<Result<BasketDto>> CreateOrUpdatePaymentIntentAsync(string basketId,string basketToken,int deliveryMethodId,CancellationToken cancellation = default)
         {
-           var basket = await _basketRepo.GetBasketAsync(basketId,cancellation);
+            // 1. Validate basket ownership
+            var basketResult = await _basketService.GetBasketForCheckoutAsync(
+                basketId,
+                basketToken,
+                cancellation);
 
+            if (!basketResult.IsSuccess)
+                return Result<BasketDto>.Fail(basketResult.Errors);
 
-            if (basket == null)
-                return Result<BasketDto>.Fail(Error.NotFound("Basket not found", $"Basket With Id {basketId} Is Not Found"));
+            CustomerBasket basket = basketResult.data;
 
-            if (basket.Items.Count == 0)
-                return Result<BasketDto>.Fail(Error.Validation("Basket is Empty", $"Can Not Create Order With Basket With Id {basketId}"));
+            // 2. Get delivery method
+            var deliveryRepo =
+                _unitOfWork.GetRepository<DeliveryMethod, int>();
 
+            var deliveryMethod = await deliveryRepo.GetByIdAsync(
+                deliveryMethodId,
+                cancellation);
+
+            if (deliveryMethod == null)
+            {
+                return Result<BasketDto>.Fail(
+                    Error.NotFound(
+                        "DeliveryMethod.NotFound",
+                        $"Delivery method with Id {deliveryMethodId} was not found."));
+            }
+
+            // 3. Get products and refresh their prices
             var productRepo = _unitOfWork.GetRepository<Product, int>();
 
-            var productIds = basket.Items.Select(i => i.Id).ToHashSet();
-            var products = (await productRepo.GetAllAsync(new ProductsWithIdsSpecifications(productIds), cancellation)).ToDictionary(x => x.Id);
+            var productIds = basket.Items
+                .Select(item => item.Id)
+                .ToHashSet();
+
+            var products = (await productRepo.GetAllAsync(
+                new ProductsWithIdsSpecifications(productIds),
+                cancellation))
+                .ToDictionary(product => product.Id);
 
             foreach (var item in basket.Items)
             {
                 if (!products.TryGetValue(item.Id, out var product))
-                    return Result<BasketDto>.Fail(Error.NotFound("Product Not Found", $"Product With Id {item.Id} Is Not Found "));
+                {
+                    return Result<BasketDto>.Fail(
+                        Error.NotFound(
+                            "Product.NotFound",
+                            $"Product with Id {item.Id} was not found."));
+                }
 
                 item.Price = product.Price;
             }
 
-            var deliveryRepo = _unitOfWork.GetRepository<DeliveryMethod, int>();
-            var deliveryMethod = await deliveryRepo.GetByIdAsync(basket.DeliveryMethodId.Value, cancellation);
-            if (deliveryMethod == null)
-                return Result<BasketDto>.Fail(Error.NotFound("Delivery Method Not Found", $"DeliveryMethod With Id {basket.DeliveryMethodId} Is Not Found "));
-
+            // 4. Calculate amount using server-side prices
+            basket.DeliveryMethodId = deliveryMethod.Id;
             basket.ShippingPrice = deliveryMethod.Cost;
-            var subtotal = basket.Items.Sum(i => i.Quantity * i.Price);
-            var amount = (long)Math.Round((subtotal + deliveryMethod.Cost) * 100m);
-            if (!string.IsNullOrEmpty(basket.PaymentIntentId))
+
+            var subtotal = basket.Items.Sum(
+                item => item.Quantity * item.Price);
+
+            var total = subtotal + deliveryMethod.Cost;
+
+            var amount = (long)Math.Round(
+                total * 100m,
+                MidpointRounding.AwayFromZero);
+
+            // 5. Create or update Stripe PaymentIntent
+            if (!string.IsNullOrWhiteSpace(basket.PaymentIntentId))
             {
-                await _paymentGateway.UpdatePaymentIntentAsync(basket.PaymentIntentId, amount, cancellation);
+                await _paymentGateway.UpdatePaymentIntentAsync(
+                    basket.PaymentIntentId,
+                    amount,
+                    cancellation);
             }
             else
             {
-                var result = await _paymentGateway.CreatePaymentIntentAsync(amount, _stripe.DefaultCurrency, cancellation);
-                basket.PaymentIntentId = result.PaymentIntentId;
-                basket.ClientSecret = result.ClientSecret;
+                var paymentResult =
+                    await _paymentGateway.CreatePaymentIntentAsync(
+                        amount,
+                        _stripe.DefaultCurrency,
+                        cancellation);
+
+                basket.PaymentIntentId = paymentResult.PaymentIntentId;
+                basket.ClientSecret = paymentResult.ClientSecret;
             }
-            await _basketRepo.CreateOrUpdateAsync(basket, ct: cancellation);
-            return _mapper.Map<BasketDto>(basket);
-           
+
+            // 6. Save updated basket in Redis
+            await _basketRepo.CreateOrUpdateAsync(
+                basket,
+                ct: cancellation);
+
+            return Result<BasketDto>.Ok(
+                _mapper.Map<BasketDto>(basket));
         }
 
-        public async Task PaymentFailed(string PaymentIntentId)
+        public async Task PaymentFailed(string paymentIntentId)
         {
             var orderRepo = _unitOfWork.GetRepository<Order, Guid>();
 
-            var order = await orderRepo.GetByIdAsync(new PaymentIntentSpecifications (PaymentIntentId));
+            var order = await orderRepo.GetByIdAsync(
+                new PaymentIntentSpecifications(paymentIntentId));
 
             if (order == null)
                 return;
 
-            order.Status= OrderStatus.PaymentFailed;
+            order.Status = OrderStatus.PaymentFailed;
 
             await _unitOfWork.SaveChangesAsync();
         }
 
-        public async Task PaymentSucceeded(string PaymentIntentId)
+        public async Task PaymentSucceeded(string paymentIntentId)
         {
             var orderRepo = _unitOfWork.GetRepository<Order, Guid>();
 
-            var order = await orderRepo.GetByIdAsync(new PaymentIntentSpecifications(PaymentIntentId));
+            var order = await orderRepo.GetByIdAsync(
+                new PaymentIntentSpecifications(paymentIntentId));
 
             if (order == null)
                 return;
+
             order.Status = OrderStatus.PaymentReceived;
 
             await _unitOfWork.SaveChangesAsync();
