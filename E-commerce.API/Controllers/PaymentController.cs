@@ -40,6 +40,58 @@ namespace E_commerce.API.Controllers
                     cancellationToken));
         }
 
+        //[AllowAnonymous]
+        //[HttpPost("webhook")]
+        //public async Task<IActionResult> StripeWebhook()
+        //{
+        //    var json = await new StreamReader(
+        //        HttpContext.Request.Body).ReadToEndAsync();
+
+        //    try
+        //    {
+        //        var stripeEvent = EventUtility.ConstructEvent(
+        //            json,
+        //            Request.Headers["Stripe-Signature"],
+        //            _stripeSettings.WebhookSecret);
+
+        //        switch (stripeEvent.Type)
+        //        {
+        //            case EventTypes.PaymentIntentSucceeded:
+
+        //                var succeededPaymentIntent =
+        //                    stripeEvent.Data.Object as PaymentIntent;
+
+        //                if (succeededPaymentIntent is not null)
+        //                {
+        //                    await _paymentService.PaymentSucceeded(
+        //                        succeededPaymentIntent.Id);
+        //                }
+
+        //                break;
+
+        //            case EventTypes.PaymentIntentPaymentFailed:
+
+        //                var failedPaymentIntent =
+        //                    stripeEvent.Data.Object as PaymentIntent;
+
+        //                if (failedPaymentIntent is not null)
+        //                {
+        //                    await _paymentService.PaymentFailed(
+        //                        failedPaymentIntent.Id);
+        //                }
+
+        //                break;
+        //        }
+
+        //        return Ok();
+        //    }
+        //    catch (StripeException ex)
+        //    {
+        //        return BadRequest(ex.Message);
+        //    }
+        //}
+
+
         [AllowAnonymous]
         [HttpPost("webhook")]
         public async Task<IActionResult> StripeWebhook()
@@ -47,12 +99,17 @@ namespace E_commerce.API.Controllers
             var json = await new StreamReader(
                 HttpContext.Request.Body).ReadToEndAsync();
 
+            Console.WriteLine("Webhook received!");
+
             try
             {
                 var stripeEvent = EventUtility.ConstructEvent(
                     json,
                     Request.Headers["Stripe-Signature"],
-                    _stripeSettings.WebhookSecret);
+                    _stripeSettings.WebhookSecret,
+                    throwOnApiVersionMismatch: false);
+
+                Console.WriteLine($"Event Type: {stripeEvent.Type}");
 
                 switch (stripeEvent.Type)
                 {
@@ -63,6 +120,9 @@ namespace E_commerce.API.Controllers
 
                         if (succeededPaymentIntent is not null)
                         {
+                            Console.WriteLine(
+                                $"Payment Succeeded: {succeededPaymentIntent.Id}");
+
                             await _paymentService.PaymentSucceeded(
                                 succeededPaymentIntent.Id);
                         }
@@ -83,11 +143,21 @@ namespace E_commerce.API.Controllers
                         break;
                 }
 
+                Console.WriteLine("Webhook processed successfully!");
+
                 return Ok();
             }
             catch (StripeException ex)
             {
+                Console.WriteLine($"Stripe Exception: {ex}");
+
                 return BadRequest(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"General Exception: {ex}");
+
+                return StatusCode(500);
             }
         }
     }
