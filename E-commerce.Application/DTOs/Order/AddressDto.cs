@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace E_commerce.Application.DTOs.Authentication
+namespace E_commerce.Application.DTOs.Order
 {
     public class AddressDto
     {

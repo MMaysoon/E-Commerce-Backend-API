@@ -1,6 +1,7 @@
 ﻿using E_commerce.Application.Common;
 using E_commerce.Application.Contracts;
 using E_commerce.Application.DTOs.Authentication;
+using E_commerce.Application.DTOs.Order;
 using E_commerce.Application.IServices;
 using E_commerce.Application.settings;
 using Microsoft.Extensions.Options;

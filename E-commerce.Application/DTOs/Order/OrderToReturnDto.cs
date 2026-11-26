@@ -1,9 +1,6 @@
-﻿using E_commerce.Application.DTOs.Authentication;
+﻿
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace E_commerce.Application.DTOs.Order
 {
@@ -11,16 +8,25 @@ namespace E_commerce.Application.DTOs.Order
     {
         public Guid Id { get; set; }
 
-        public String BygerEmail { get; set; } = default!;
+        public string BuyerEmail { get; set; } = default!;
 
-        public DateTimeOffset OrderDate {  get; set; }
+        public string PhoneNumber { get; set; } = default!;
+
+
+        public DateTimeOffset OrderDate { get; set; }
+
         public ICollection<OrderItemDto> Items { get; set; } = [];
-        public AddressDto ShipToAddress { get; set; } = default!;
-        public string DeliveryMethod { get; set; } = default!;
-        public string Status { get; set; } = default!;
-        public decimal SubTotal { get; set; }
-        public decimal DeliveryCost { get; set; }
-        public decimal Total { get; set; }
 
+        public AddressDto ShipToAddress { get; set; } = default!;
+
+        public string DeliveryMethod { get; set; } = default!;
+
+        public string Status { get; set; } = default!;
+
+        public decimal SubTotal { get; set; }
+
+        public decimal DeliveryCost { get; set; }
+
+        public decimal Total { get; set; }
     }
 }

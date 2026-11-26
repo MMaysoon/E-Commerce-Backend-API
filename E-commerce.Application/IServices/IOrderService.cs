@@ -10,12 +10,12 @@ namespace E_commerce.Application.IServices
 {
     public interface IOrderService
     {
-        Task<Result<OrderToReturnDto>> createOrderAsync(OrderDto orderDto, string email, CancellationToken cancellation = default);
+        Task<Result<CreateOrderResponseDto>> CreateOrderAsync( OrderDto orderDto,CancellationToken cancellation = default);
 
-        Task<Result<IReadOnlyList<DeliveryMethodDto>>> GetAllDeliveryMethodAsync (CancellationToken cancellation = default);
+        Task<Result<IReadOnlyList<DeliveryMethodDto>>> GetAllDeliveryMethodAsync(CancellationToken cancellation = default);
 
-        Task<Result<IReadOnlyList<OrderToReturnDto>>> GetAllOrderAsync (string email, CancellationToken cancellation = default);
+        //Task<Result<IReadOnlyList<OrderToReturnDto>>> GetAllOrderAsync (string email, CancellationToken cancellation = default);
 
-        Task<Result<OrderToReturnDto>> GetOrderByIdEmailAsync(Guid id , string email, CancellationToken cancellation = default);
+        //Task<Result<OrderToReturnDto>> GetOrderByIdEmailAsync(Guid id , string email, CancellationToken cancellation = default);
     }
 }

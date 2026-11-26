@@ -1,6 +1,7 @@
 ﻿using E_commerce.Application.Common;
 using E_commerce.Application.Contracts;
 using E_commerce.Application.DTOs.Authentication;
+using E_commerce.Application.DTOs.Order;
 using E_commerce.Infrastructure.Identity.Data;
 using E_commerce.Infrastructure.Identity.Entities;
 using Microsoft.AspNetCore.Identity;

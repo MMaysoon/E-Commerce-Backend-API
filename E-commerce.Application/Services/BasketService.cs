@@ -204,6 +204,30 @@ namespace E_commerce.Application.Services
                         "Failed to delete basket."));
         }
 
+        // 7. Get basket for checkout
+        public async Task<Result<CustomerBasket>> GetBasketForCheckoutAsync(string basketId,string basketToken,CancellationToken ct = default)
+        {
+            var basket = await GetOwnedBasketAsync(basketId,basketToken,ct);
+
+            if (basket == null)
+            {
+                return Result<CustomerBasket>.Fail(
+                    Error.Failure(
+                        "Basket.AccessDenied",
+                        "Basket not found or access denied."));
+            }
+
+            if (basket.Items.Count == 0)
+            {
+                return Result<CustomerBasket>.Fail(
+                    Error.Validation(
+                        "Basket.Empty",
+                        "Cannot checkout with an empty basket."));
+            }
+
+            return Result<CustomerBasket>.Ok(basket);
+        }
+
         // Helper: Get basket only if token is valid
         private async Task<CustomerBasket?> GetOwnedBasketAsync(string basketId, string basketToken,CancellationToken ct)
         {

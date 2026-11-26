@@ -1,10 +1,5 @@
-﻿using E_commerce.Application.DTOs.Authentication;
-using System;
-using System.Collections.Generic;
+﻿
 using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace E_commerce.Application.DTOs.Order
 {
@@ -12,8 +7,22 @@ namespace E_commerce.Application.DTOs.Order
     {
         [Required]
         public string BasketId { get; set; } = default!;
+
         [Required]
+        public string BasketToken { get; set; } = default!;
+
+        [Required]
+        [EmailAddress]
+        public string Email { get; set; } = default!;
+
+        [Required]
+        [Phone]
+        public string PhoneNumber { get; set; } = default!;
+
+        [Required]
+        [Range(1, int.MaxValue)]
         public int DeliveryMethodId { get; set; }
+
         [Required]
         public AddressDto ShipToAddress { get; set; } = default!;
     }
