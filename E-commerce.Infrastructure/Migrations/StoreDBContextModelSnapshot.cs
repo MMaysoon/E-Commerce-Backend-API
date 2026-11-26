@@ -36,21 +36,47 @@ namespace E_commerce.Infrastructure.Migrations
                     b.Property<string>("DeliveryTime")
                         .IsRequired()
                         .HasMaxLength(50)
-                        .HasColumnType("Varchar");
+                        .HasColumnType("varchar");
 
                     b.Property<string>("Description")
                         .IsRequired()
-                        .HasMaxLength(10)
+                        .HasMaxLength(200)
                         .HasColumnType("varchar");
 
                     b.Property<string>("ShortName")
                         .IsRequired()
                         .HasMaxLength(50)
-                        .HasColumnType("VarChar");
+                        .HasColumnType("varchar");
 
                     b.HasKey("Id");
 
                     b.ToTable("DeliveryMethod", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Cost = 30m,
+                            DeliveryTime = "3-5 Business Days",
+                            Description = "Standard home delivery",
+                            ShortName = "Standard"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Cost = 50m,
+                            DeliveryTime = "1-2 Business Days",
+                            Description = "Express home delivery",
+                            ShortName = "Express"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Cost = 80m,
+                            DeliveryTime = "Next Business Day",
+                            Description = "Next day home delivery",
+                            ShortName = "Next Day"
+                        });
                 });
 
             modelBuilder.Entity("E_commerce.Domain.Entities.Order.Order", b =>
@@ -70,7 +96,15 @@ namespace E_commerce.Infrastructure.Migrations
                     b.Property<int>("DeliveryMethodId")
                         .HasColumnType("int");
 
+                    b.Property<string>("OrderAccessTokenHash")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("PaymentIntentId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PhoneNumber")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -151,7 +185,7 @@ namespace E_commerce.Infrastructure.Migrations
 
                     b.HasIndex("TypeId");
 
-                    b.ToTable("Products", (string)null);
+                    b.ToTable("Products");
                 });
 
             modelBuilder.Entity("E_commerce.Domain.Entities.Products.ProductBrand", b =>
@@ -168,7 +202,7 @@ namespace E_commerce.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("ProductBrands", (string)null);
+                    b.ToTable("ProductBrands");
                 });
 
             modelBuilder.Entity("E_commerce.Domain.Entities.Products.ProductType", b =>
@@ -185,7 +219,7 @@ namespace E_commerce.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("ProductTypes", (string)null);
+                    b.ToTable("ProductTypes");
                 });
 
             modelBuilder.Entity("E_commerce.Domain.Entities.Order.Order", b =>
@@ -217,13 +251,17 @@ namespace E_commerce.Infrastructure.Migrations
                                 .IsRequired()
                                 .HasColumnType("nvarchar(max)");
 
+                            b1.Property<string>("PhoneNumber")
+                                .IsRequired()
+                                .HasColumnType("nvarchar(max)");
+
                             b1.Property<string>("Street")
                                 .IsRequired()
                                 .HasColumnType("nvarchar(max)");
 
                             b1.HasKey("OrderId");
 
-                            b1.ToTable("Orders", (string)null);
+                            b1.ToTable("Orders");
 
                             b1.WithOwner()
                                 .HasForeignKey("OrderId");
@@ -260,7 +298,7 @@ namespace E_commerce.Infrastructure.Migrations
 
                             b1.HasKey("OrderItemId");
 
-                            b1.ToTable("OrderItem", (string)null);
+                            b1.ToTable("OrderItem");
 
                             b1.WithOwner()
                                 .HasForeignKey("OrderItemId");
