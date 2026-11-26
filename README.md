@@ -104,25 +104,7 @@ It uses SQL Server and Entity Framework Core for persistent data, Redis for bask
 
 The solution follows **Onion / Layered Architecture**, separating business logic from infrastructure and external services.
 
-### Architecture Overview
 
-```mermaid
-flowchart LR
-    Client[Client / Swagger] --> API[E-commerce.API]
-
-    API --> APP[E-commerce.Application]
-    API --> INFRA[E-commerce.Infrastructure]
-
-    APP --> DOMAIN[E-commerce.Domain]
-    INFRA --> DOMAIN
-
-    INFRA --> SQL[(SQL Server)]
-    INFRA --> REDIS[(Redis)]
-    INFRA --> STRIPE[Stripe API]
-    INFRA --> SMTP[SMTP Server]
-
-    STRIPE -->|Signed Webhooks| API
-```
 
 ### Design Patterns and Principles
 
