@@ -10,7 +10,7 @@ namespace E_commerce.Application.DTOs.Baskets
     public class BasketItemDto
     {
         [Required(ErrorMessage = "ProductId is required.")]
-        public int Id { get; set; }
+        public int ProductId { get; set; }
 
         [Required(ErrorMessage = "ProductName is required.")]
         public string ProductName { get; set; } = default!;

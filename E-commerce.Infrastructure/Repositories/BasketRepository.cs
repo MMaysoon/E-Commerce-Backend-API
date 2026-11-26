@@ -21,6 +21,7 @@ namespace E_commerce.Infrastructure.Repositories
         public async Task<CustomerBasket?> CreateOrUpdateAsync(CustomerBasket basket, TimeSpan? timeToLive=null, CancellationToken ct = default)
         {
             var json = JsonSerializer.Serialize(basket);
+            // Redis key -> Basket Id
             var success = await _database.StringSetAsync(basket.Id, json, timeToLive ?? TimeSpan.FromDays(30));
             return success ? basket : null;
         }

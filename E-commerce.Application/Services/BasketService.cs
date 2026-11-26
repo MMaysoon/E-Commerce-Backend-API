@@ -1,52 +1,293 @@
-﻿using AutoMapper;
+﻿
+using AutoMapper;
 using E_commerce.Application.Common;
 using E_commerce.Application.DTOs.Baskets;
 using E_commerce.Application.IServices;
 using E_commerce.Domain.Contracts;
 using E_commerce.Domain.Entities.Baskets;
-using System;
-using System.Collections.Generic;
-using System.Linq;
+using E_commerce.Domain.Entities.Products;
+using System.Security.Cryptography;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace E_commerce.Application.Services
 {
     public class BasketService : IBasketService
     {
         private readonly IBasketRepository _basketRepository;
+        private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
 
-        public BasketService(IBasketRepository basketRepository, IMapper mapper)
+        public BasketService(IBasketRepository basketRepository,IUnitOfWork unitOfWork,IMapper mapper)
         {
             _basketRepository = basketRepository;
+            _unitOfWork = unitOfWork;
             _mapper = mapper;
         }
 
-        public async Task<Result<BasketDto>> CreateOrUpdateBasketAsync(BasketDto basket, CancellationToken cancellationToken = default)
+        // 1. Create new basket
+        public async Task<Result<BasketCreationDto>> CreateBasketAsync(CancellationToken ct = default)
         {
-            var customerBasket=_mapper.Map<CustomerBasket>(basket);
-            //ct from basketRepository becuse i not send pervious paramter (TTL)
-            var basketResult = await _basketRepository.CreateOrUpdateAsync(customerBasket, ct:cancellationToken);
-            return basketResult !=null ?
-                Result<BasketDto>.Ok(_mapper.Map<BasketDto>(basketResult))
-                : Result<BasketDto>.Fail(Error.Failure("BasketCreateOrUpdate.Failure","Failed to create or update basket"));
+            var basketToken = GenerateBasketToken();
+
+            var basket = new CustomerBasket
+            {
+                Id = Guid.NewGuid().ToString(),
+                BasketTokenHash = HashBasketToken(basketToken),
+                Items = []
+            };
+
+            var result = await _basketRepository.CreateOrUpdateAsync(basket, ct: ct);
+
+            if (result == null)
+            {
+                return Result<BasketCreationDto>.Fail(
+                    Error.Failure(
+                        "Basket.Create.Failed",
+                        "Failed to create basket."));
+            }
+
+            return Result<BasketCreationDto>.Ok(
+                new BasketCreationDto
+                {
+                    Basket = _mapper.Map<BasketDto>(result),
+                    BasketToken = basketToken
+                });
         }
 
-        public async Task<Result<bool>> DeleteBasketAsync(string id, CancellationToken cancellationToken = default)
+        // 2. Get basket
+        public async Task<Result<BasketDto>> GetBasketAsync(string basketId,string basketToken, CancellationToken ct = default)
         {
-            var result = await _basketRepository.DeleteBasketAsync(id, ct:cancellationToken);
-            return result ?
-                Result<bool>.Ok(true)
-                : Result<bool>.Fail(Error.Failure("BasketDelete.Failure","Failed to delete basket"));
+            var basket = await GetOwnedBasketAsync(basketId, basketToken, ct);
+
+            if (basket == null)
+                return BasketAccessFailure();
+
+            return Result<BasketDto>.Ok(
+                _mapper.Map<BasketDto>(basket));
         }
 
-        public async Task<Result<BasketDto>> GetBasketAsync(string id, CancellationToken ct = default)
+        // 3. Add item
+        public async Task<Result<BasketDto>> AddItemAsync(string basketId,string basketToken,AddBasketItemDto itemDto,CancellationToken ct = default)
         {
-            var basket = await _basketRepository.GetBasketAsync(id, ct:ct);
-            return basket != null ?
-                Result<BasketDto>.Ok(_mapper.Map<BasketDto>(basket))
-                : Result<BasketDto>.Fail(Error.Failure("BasketGet.Failure","Basket not found"));
+            var basket = await GetOwnedBasketAsync(basketId, basketToken, ct);
+
+            if (basket == null)
+                return BasketAccessFailure();
+
+            if (itemDto.Quantity < 1 || itemDto.Quantity > 99)
+            {
+                return Result<BasketDto>.Fail(
+                    Error.Failure(
+                        "Basket.InvalidQuantity",
+                        "Quantity must be between 1 and 99."));
+            }
+
+            // Get product from SQL Server
+            var productRepository =_unitOfWork.GetRepository<Product, int>();
+
+            var product = await productRepository.GetByIdAsync(itemDto.ProductId, ct);
+
+            if (product == null)
+            {
+                return Result<BasketDto>.Fail(
+                    Error.Failure(
+                        "Basket.ProductNotFound",
+                        "Product not found."));
+            }
+
+            var existingItem = basket.Items.FirstOrDefault( x => x.Id == itemDto.ProductId);
+
+            if (existingItem != null)
+            {
+                if (existingItem.Quantity + itemDto.Quantity > 99)
+                {
+                    return Result<BasketDto>.Fail(
+                        Error.Failure(
+                            "Basket.QuantityLimit",
+                            "Maximum quantity per product is 99."));
+                }
+
+                existingItem.Quantity += itemDto.Quantity;
+
+                // Refresh product data from database
+                existingItem.ProductName = product.Name;
+                existingItem.PictureUrl = product.PictureUrl;
+                existingItem.Price = product.Price;
+            }
+            else
+            {
+                basket.Items.Add(new BasketItem
+                {
+                    Id = product.Id,
+                    ProductName = product.Name,
+                    PictureUrl = product.PictureUrl,
+                    Price = product.Price,
+                    Quantity = itemDto.Quantity
+                });
+            }
+
+            return await SaveBasketAsync(basket, ct);
+        }
+
+        // 4. Update item quantity
+        public async Task<Result<BasketDto>> UpdateItemAsync(string basketId,string basketToken,int productId,UpdateBasketItemDto itemDto,CancellationToken ct = default)
+        {
+            var basket = await GetOwnedBasketAsync( basketId, basketToken, ct);
+
+            if (basket == null)
+                return BasketAccessFailure();
+
+            if (itemDto.Quantity < 1 || itemDto.Quantity > 99)
+            {
+                return Result<BasketDto>.Fail(
+                    Error.Failure(
+                        "Basket.InvalidQuantity",
+                        "Quantity must be between 1 and 99."));
+            }
+
+            var item = basket.Items.FirstOrDefault(x => x.Id == productId);
+
+            if (item == null)
+            {
+                return Result<BasketDto>.Fail(
+                    Error.Failure(
+                        "Basket.ItemNotFound",
+                        "Item not found in basket."));
+            }
+
+            item.Quantity = itemDto.Quantity;
+
+            return await SaveBasketAsync(basket, ct);
+        }
+
+        // 5. Remove item
+        public async Task<Result<BasketDto>> RemoveItemAsync(string basketId,string basketToken,int productId,CancellationToken ct = default)
+        {
+            var basket = await GetOwnedBasketAsync( basketId, basketToken, ct);
+
+            if (basket == null)
+                return BasketAccessFailure();
+
+            var item = basket.Items.FirstOrDefault(x => x.Id == productId);
+
+            if (item == null)
+            {
+                return Result<BasketDto>.Fail(
+                    Error.Failure(
+                        "Basket.ItemNotFound",
+                        "Item not found in basket."));
+            }
+
+            basket.Items.Remove(item);
+
+            return await SaveBasketAsync(basket, ct);
+        }
+
+        // 6. Delete basket
+        public async Task<Result<bool>> DeleteBasketAsync(string basketId,string basketToken,CancellationToken ct = default)
+        {
+            var basket = await GetOwnedBasketAsync(basketId, basketToken, ct);
+
+            if (basket == null)
+                return Result<bool>.Fail(
+                    Error.Failure(
+                        "Basket.AccessDenied",
+                        "Basket not found or access denied."));
+
+            var deleted = await _basketRepository.DeleteBasketAsync(basketId, ct);
+
+            return deleted
+                ? Result<bool>.Ok(true)
+                : Result<bool>.Fail(
+                    Error.Failure(
+                        "Basket.Delete.Failed",
+                        "Failed to delete basket."));
+        }
+
+        // Helper: Get basket only if token is valid
+        private async Task<CustomerBasket?> GetOwnedBasketAsync(string basketId, string basketToken,CancellationToken ct)
+        {
+            if (string.IsNullOrWhiteSpace(basketToken))
+                return null;
+
+            var basket = await _basketRepository.GetBasketAsync(
+                basketId, ct);
+
+            if (basket == null ||
+                string.IsNullOrWhiteSpace(basket.BasketTokenHash))
+                return null;
+
+            var providedHash = HashBasketToken(basketToken);
+
+            return VerifyBasketToken(
+                providedHash, basket.BasketTokenHash)
+                ? basket
+                : null;
+        }
+
+        // Helper: Save basket and return DTO
+        private async Task<Result<BasketDto>> SaveBasketAsync(CustomerBasket basket,CancellationToken ct)
+        {
+            var result = await _basketRepository.CreateOrUpdateAsync(
+                basket, ct: ct);
+
+            if (result == null)
+            {
+                return Result<BasketDto>.Fail(
+                    Error.Failure(
+                        "Basket.Save.Failed",
+                        "Failed to save basket."));
+            }
+
+            return Result<BasketDto>.Ok( _mapper.Map<BasketDto>(result));
+        }
+
+        // Generate secure random token
+        private static string GenerateBasketToken()
+        {
+            var randomBytes = RandomNumberGenerator.GetBytes(32);
+
+            return Convert.ToBase64String(randomBytes)
+                .Replace("+", "-")
+                .Replace("/", "_")
+                .TrimEnd('=');
+        }
+
+        // Hash token before storing it
+        private static string HashBasketToken(string token)
+        {
+            var tokenBytes = Encoding.UTF8.GetBytes(token);
+            var hashBytes = SHA256.HashData(tokenBytes);
+
+            return Convert.ToHexString(hashBytes);
+        }
+
+        // Compare hashes safely
+        private static bool VerifyBasketToken(string providedHash,string storedHash)
+        {
+            try
+            {
+                var providedBytes =
+                    Convert.FromHexString(providedHash);
+
+                var storedBytes =
+                    Convert.FromHexString(storedHash);
+
+                return CryptographicOperations.FixedTimeEquals(
+                    providedBytes, storedBytes);
+            }
+            catch (FormatException)
+            {
+                return false;
+            }
+        }
+
+        private static Result<BasketDto> BasketAccessFailure()
+        {
+            return Result<BasketDto>.Fail(
+                Error.Failure(
+                    "Basket.AccessDenied",
+                    "Basket not found or access denied."));
         }
     }
 }

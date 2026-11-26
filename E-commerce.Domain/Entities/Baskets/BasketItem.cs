@@ -8,6 +8,7 @@ namespace E_commerce.Domain.Entities.Baskets
 {
     public class BasketItem
     {
+        // Represents ProductId
         public int Id { get; set; }
         public string ProductName { get; set; } = default!;
         public string PictureUrl { get; set; } = default!;
