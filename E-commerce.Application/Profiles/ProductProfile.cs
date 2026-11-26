@@ -1,0 +1,29 @@
+﻿using AutoMapper;
+using E_commerce.Application.DTOs.Product;
+using E_commerce.Domain.Entities.Products;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace E_commerce.Application.Profiles
+{
+    public class ProductProfile:Profile
+    {
+        public ProductProfile()
+        {
+            CreateMap<Product, ProductDto>()
+                .ForMember(dest => dest.ProductBrand, opt => opt.MapFrom(src => src.ProductBrand.Name))
+                .ForMember(dest => dest.ProductType, opt => opt.MapFrom(src => src.ProductType.Name))
+                .ForMember(dest=>dest.PictureUrl,opt=>opt.MapFrom<PictureUrlResolver>());
+               
+
+            CreateMap<ProductBrand, BrandDto>();
+
+            CreateMap<ProductType, TypeDto>();
+
+
+        }
+    }
+}
