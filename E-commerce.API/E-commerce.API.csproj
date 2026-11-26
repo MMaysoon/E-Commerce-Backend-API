@@ -23,4 +23,8 @@
     <ProjectReference Include="..\E-commerce.Infrastructure\E-commerce.Infrastructure.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="DataSeed\" />
+  </ItemGroup>
+
 </Project>
