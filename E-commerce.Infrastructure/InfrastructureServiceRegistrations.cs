@@ -66,7 +66,10 @@ namespace E_commerce.Infrastructure
             });
 
             services
-                .AddIdentity<ApplicationUser, IdentityRole>()   // Registers Identity services for User and Role management
+                .AddIdentity<ApplicationUser, IdentityRole>(options =>
+                {
+                    options.User.RequireUniqueEmail = true;
+                })  // Registers Identity services for User and Role management
                 .AddEntityFrameworkStores<StoreIdentityDbContext>()   // Configures EF Core as the storage provider using StoreIdentityDbContext
                 .AddDefaultTokenProviders();   // Registers token providers for password reset, email confirmation, etc.
 

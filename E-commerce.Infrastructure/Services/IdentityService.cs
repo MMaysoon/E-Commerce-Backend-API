@@ -48,7 +48,26 @@ namespace E_commerce.Infrastructure.Services
             var result = await _userManager.CreateAsync(user, registerDto.Password);
             if (!result.Succeeded)
             {
-                var errors = result.Errors.Select(e => new Error(e.Code, e.Description)).ToList();
+                var errors = result.Errors.Select(e =>
+                {
+                    var type = e.Code switch
+                    {
+                        "DuplicateEmail" or "DuplicateUserName"
+                            => ErrorType.Conflict,
+
+                        "PasswordTooShort" or
+                        "PasswordRequiresDigit" or
+                        "PasswordRequiresUpper" or
+                        "PasswordRequiresLower" or
+                        "PasswordRequiresNonAlphanumeric"
+                            => ErrorType.Validation,
+
+                        _ => ErrorType.Failure
+                    };
+
+                    return new Error(e.Code, e.Description, type);
+                }).ToList();
+
                 return Result<IdentityUserResult>.Fail(errors);
             }
 

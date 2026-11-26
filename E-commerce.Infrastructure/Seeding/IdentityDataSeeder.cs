@@ -61,7 +61,7 @@ namespace E_commerce.Infrastructure.Seeding
                 }
 
                 // Seed Admin User
-                var admin = await _userManager.FindByNameAsync("Maysoon");
+                var admin = await _userManager.FindByEmailAsync("maysoonahmedahmed@gmail.com");
 
                 if (admin == null)
                 {
@@ -74,13 +74,6 @@ namespace E_commerce.Infrastructure.Seeding
                         EmailConfirmed = true
                     };
 
-                    // if seed using user secerts
-                    //var password = _configuration["SeedAdmin:Password"];
-
-                    //if (string.IsNullOrWhiteSpace(password)) throw new InvalidOperationException( "Seed admin password is not configured.");
-
-                    //var result = await _userManager.CreateAsync(admin, password);
-
                     var result = await _userManager.CreateAsync(admin, "P@ssw0rd");
 
                     if (!result.Succeeded)
@@ -91,6 +84,15 @@ namespace E_commerce.Infrastructure.Seeding
 
                         return;
                     }
+                }
+                else
+                {
+                    // Development only: verify the existing password
+                    var passwordValid = await _userManager.CheckPasswordAsync( admin, "P@ssw0rd");
+
+                    _logger.LogInformation(
+                        "Admin password valid: {PasswordValid}",
+                        passwordValid);
                 }
 
                 // Assign Admin Role

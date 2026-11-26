@@ -56,34 +56,47 @@ namespace E_commerce.Application.Services
             return result.data;
         }
 
-        public async Task<Result<UserDto>> LoginAsync(LoginDto loginDto, CancellationToken cancellationToken = default)
+        public async Task<Result<UserDto>> LoginAsync(LoginDto loginDto,CancellationToken cancellationToken = default)
         {
-            // Get User By Email 
-            var userResult = await _identityService.FindByEmailAsync(loginDto.Email, cancellationToken);
-            if (!userResult.IsSuccess)
-                return Result<UserDto>.Fail(userResult.Errors);
+            var invalidCredentials = Error.Unauthorized("Invalid Email or Password");
 
-            // Check Password 
-            var passwordResult = await _identityService.CheckPasswordAsync(loginDto.Email, loginDto.Password, cancellationToken);
-            // data here boolean value indicating if the password is valid or not
+            // 1. Find User
+            var userResult = await _identityService.FindByEmailAsync(
+                loginDto.Email, cancellationToken);
+
+            if (!userResult.IsSuccess || userResult.data is null)
+                return Result<UserDto>.Fail(invalidCredentials);
+
+            // 2. Check Password
+            var passwordResult = await _identityService.CheckPasswordAsync(
+                loginDto.Email, loginDto.Password, cancellationToken);
+
             if (!passwordResult.IsSuccess || !passwordResult.data)
-                return Result<UserDto>.Fail( Error.Unauthorized("Invalid Email or Password"));
+                return Result<UserDto>.Fail(invalidCredentials);
 
-            // Check Email Confirmation
-            var emailConfirmedResult =await _identityService.IsEmailConfirmedAsync(loginDto.Email, cancellationToken);
+            // 3. Check Email Confirmation
+            var emailConfirmedResult =
+                await _identityService.IsEmailConfirmedAsync(
+                    loginDto.Email, cancellationToken);
 
             if (!emailConfirmedResult.IsSuccess)
-                return Result<UserDto>.Fail(emailConfirmedResult.Errors);
+                return Result<UserDto>.Fail(invalidCredentials);
 
             if (!emailConfirmedResult.data)
-                return Result<UserDto>.Fail(Error.Unauthorized("Please confirm your email before logging in."));
+                return Result<UserDto>.Fail(
+                    Error.Unauthorized("Please confirm your email before logging in."));
 
-            var rolesResult = await _identityService.GetRolesAsync(loginDto.Email, cancellationToken);
+            // 4. Get Roles
+            var rolesResult = await _identityService.GetRolesAsync(
+                loginDto.Email, cancellationToken);
+
             if (!rolesResult.IsSuccess)
                 return Result<UserDto>.Fail(rolesResult.Errors);
-            var roles = rolesResult.data;
+
+            // 5. Generate Token
             var user = userResult.data;
-            var token = _tokenService.CreateToken(user.Id, user.Email, user.UserName, roles);
+            var token = _tokenService.CreateToken(
+                user.Id, user.Email, user.UserName, rolesResult.data);
 
             return new UserDto
             {
@@ -93,7 +106,7 @@ namespace E_commerce.Application.Services
             };
         }
 
-        
+
 
         public async Task<Result<AddressDto>> UpdateUserAddressAsync(AddressDto addressDto, string email, CancellationToken cancellationToken = default)
                 => await _identityService.UpSertAddressAsync(email, addressDto, cancellationToken);
@@ -187,43 +200,71 @@ namespace E_commerce.Application.Services
         }
 
 
-        public async Task<Result<bool>> ForgotPasswordAsync(ForgotPasswordDto forgotPasswordDto,CancellationToken cancellationToken = default)
+
+        public async Task<Result<bool>> ForgotPasswordAsync( ForgotPasswordDto forgotPasswordDto,CancellationToken cancellationToken = default)
         {
+            // 1. Generate Password Reset Token
             var tokenResult = await _identityService.GeneratePasswordResetTokenAsync(
                 forgotPasswordDto.Email,
                 cancellationToken);
 
-            // Don't reveal whether the email exists
+            // 2. Don't reveal whether the email exists
             if (!tokenResult.IsSuccess)
                 return true;
 
-            var resetLink =
-                $"{_emailConfirmationSettings.BaseUrl}" +
-                $"?email={Uri.EscapeDataString(forgotPasswordDto.Email)}" +
-                $"&token={Uri.EscapeDataString(tokenResult.data)}";
+            // 3. Build Email Body
+            var encodedEmail =
+                System.Net.WebUtility.HtmlEncode(forgotPasswordDto.Email);
+
+            var encodedToken =
+                System.Net.WebUtility.HtmlEncode(tokenResult.data);
+
 
             var emailBody = $"""
-                <h2>Password Reset Request</h2>
-                <p>We received a request to reset your password.</p>
-                <p>Click the link below to reset it:</p>
-                <a href="{System.Net.WebUtility.HtmlEncode(resetLink)}">
-                    Reset Password
-                </a>
-                <p>If you did not request this, please ignore this email.</p>
+                <html>
+                <body>
+                    <h2>Password Reset Request</h2>
+
+                    <p>We received a request to reset your password.</p>
+
+                    <p>Use the following information in Postman:</p>
+
+                    <p>
+                        <strong>Email:</strong>
+                        {System.Net.WebUtility.HtmlEncode(forgotPasswordDto.Email)}
+                    </p>
+
+                    <p><strong>Reset Token:</strong></p>
+
+                    <p style="word-break: break-all;">
+                        {System.Net.WebUtility.HtmlEncode(tokenResult.data)}
+                    </p>
+
+                    <p>If you did not request this, please ignore this email.</p>
+                </body>
+                </html>
                 """;
 
+
+            // 4. Send Email
             try
             {
-                await _emailService.SendEmailAsync(forgotPasswordDto.Email,"Reset Your Password",emailBody);
+                await _emailService.SendEmailAsync(
+                    forgotPasswordDto.Email,
+                    "Reset Your Password",
+                    emailBody);
             }
             catch (Exception)
             {
                 return Result<bool>.Fail(
-                    Error.Failure("EmailSendingFailed","Password reset email could not be sent."));
+                    Error.Failure(
+                        "EmailSendingFailed",
+                        "Password reset email could not be sent."));
             }
 
             return true;
         }
+
 
 
         public async Task<Result<bool>> ResetPasswordAsync(ResetPasswordDto resetPasswordDto,CancellationToken cancellationToken = default)
