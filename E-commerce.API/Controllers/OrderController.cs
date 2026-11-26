@@ -31,5 +31,16 @@ namespace E_commerce.API.Controllers
         {
             return ToActionResult(await _orderService.GetAllDeliveryMethodAsync(cancellationToken));
         }
+
+        [AllowAnonymous]
+        [HttpGet("{orderId:guid}/track")]
+        public async Task<ActionResult<OrderToReturnDto>> TrackOrder(Guid orderId,[FromHeader(Name = "X-Order-Access-Token")] string accessToken,CancellationToken cancellationToken)
+        {
+            return ToActionResult(
+                await _orderService.TrackOrderAsync(
+                    orderId,
+                    accessToken,
+                    cancellationToken));
+        }
     }
 }

@@ -14,6 +14,8 @@ namespace E_commerce.Application.IServices
 
         Task<Result<IReadOnlyList<DeliveryMethodDto>>> GetAllDeliveryMethodAsync(CancellationToken cancellation = default);
 
+        Task<Result<OrderToReturnDto>> TrackOrderAsync(Guid orderId,string accessToken,CancellationToken cancellation = default);
+
         //Task<Result<IReadOnlyList<OrderToReturnDto>>> GetAllOrderAsync (string email, CancellationToken cancellation = default);
 
         //Task<Result<OrderToReturnDto>> GetOrderByIdEmailAsync(Guid id , string email, CancellationToken cancellation = default);

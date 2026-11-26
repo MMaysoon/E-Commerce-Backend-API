@@ -90,11 +90,17 @@ namespace E_commerce.Infrastructure.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
 
+                    b.Property<bool>("ConfirmationEmailSent")
+                        .HasColumnType("bit");
+
                     b.Property<DateTimeOffset>("DateTimeOffset")
                         .HasColumnType("datetimeoffset");
 
                     b.Property<int>("DeliveryMethodId")
                         .HasColumnType("int");
+
+                    b.Property<string>("EmailTrackingTokenHash")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("OrderAccessTokenHash")
                         .IsRequired()

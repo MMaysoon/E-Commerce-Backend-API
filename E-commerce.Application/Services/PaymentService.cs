@@ -13,6 +13,8 @@ using E_commerce.Domain.Entities.Products;
 using Microsoft.Extensions.Options;
 using System;
 using System.Linq;
+using System.Security.Cryptography;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -26,6 +28,7 @@ namespace E_commerce.Application.Services
         private readonly IPaymentGateWay _paymentGateway;
         private readonly PaymentGatewaySettings _stripe;
         private readonly IMapper _mapper;
+        private readonly IEmailService _emailService;
 
         public PaymentService(
             IBasketRepository basketRepo,
@@ -33,7 +36,8 @@ namespace E_commerce.Application.Services
             IUnitOfWork unitOfWork,
             IPaymentGateWay paymentGateway,
             IOptions<PaymentGatewaySettings> stripe,
-            IMapper mapper)
+            IMapper mapper,
+            IEmailService emailService)
         {
             _basketRepo = basketRepo;
             _basketService = basketService;
@@ -41,6 +45,7 @@ namespace E_commerce.Application.Services
             _paymentGateway = paymentGateway;
             _stripe = stripe.Value;
             _mapper = mapper;
+            _emailService = emailService;
         }
 
         public async Task<Result<BasketDto>> CreateOrUpdatePaymentIntentAsync(string basketId,string basketToken,int deliveryMethodId,CancellationToken cancellation = default)
@@ -164,9 +169,147 @@ namespace E_commerce.Application.Services
             if (order == null)
                 return;
 
+            // Prevent sending the confirmation email again
+            if (order.ConfirmationEmailSent)
+                return;
+
+            // Update order status
             order.Status = OrderStatus.PaymentReceived;
 
+            // Generate a separate tracking token for the email
+            var emailTrackingToken = GenerateOrderTrackingToken();
+
+            // Store only the token hash in the database
+            order.EmailTrackingTokenHash =
+                HashOrderTrackingToken(emailTrackingToken);
+
             await _unitOfWork.SaveChangesAsync();
+
+            // Build confirmation email
+            var emailBody = BuildOrderConfirmationEmail(
+                order,
+                emailTrackingToken);
+
+            // Send confirmation email
+            await _emailService.SendEmailAsync(
+                order.BuyerEmail,
+                "Order Confirmation - Payment Successful",
+                emailBody);
+
+            // Mark confirmation email as sent
+            order.ConfirmationEmailSent = true;
+
+            await _unitOfWork.SaveChangesAsync();
+        }
+
+        private string BuildOrderConfirmationEmail(Order order,string trackingToken)
+        {
+            var itemsHtml = string.Join("", order.Items.Select(item => $@"
+                <tr>
+                    <td style='padding:12px;border-bottom:1px solid #eee;'>
+                        {System.Net.WebUtility.HtmlEncode(item.Product.ProductName)}
+                    </td>
+                    <td style='padding:12px;border-bottom:1px solid #eee;text-align:center;'>
+                        {item.Quantity}
+                    </td>
+                    <td style='padding:12px;border-bottom:1px solid #eee;text-align:right;'>
+                        {item.Price:C}
+                    </td>
+                    <td style='padding:12px;border-bottom:1px solid #eee;text-align:right;'>
+                        {item.Price * item.Quantity:C}
+                    </td>
+                </tr>
+            "));
+
+            var deliveryCost = order.DeliveryMethod.Cost;
+            var total = order.GetTotal();
+
+            return $@"
+                <!DOCTYPE html>
+                <html>
+                <body style='font-family:Arial,sans-serif;background:#f5f5f5;padding:20px;'>
+                    <div style='max-width:650px;margin:auto;background:white;padding:30px;border-radius:10px;'>
+
+                        <h2 style='color:#16a34a;'>Payment Successful!</h2>
+
+                        <p>
+                            Thank you for your order.
+                            Your payment has been received successfully.
+                        </p>
+
+                        <h3>Order Information</h3>
+
+                        <p><strong>Order ID:</strong> {order.Id}</p>
+                        <p><strong>Order Date:</strong> {order.DateTimeOffset:dd MMM yyyy}</p>
+                        <p><strong>Payment Status:</strong> Paid</p>
+                        <p><strong>Order Status:</strong> {order.Status}</p>
+
+                        <h3>Order Items</h3>
+
+                        <table style='width:100%;border-collapse:collapse;'>
+                            <thead>
+                                <tr style='background:#f3f4f6;'>
+                                    <th style='padding:12px;text-align:left;'>Product</th>
+                                    <th style='padding:12px;'>Quantity</th>
+                                    <th style='padding:12px;text-align:right;'>Price</th>
+                                    <th style='padding:12px;text-align:right;'>Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {itemsHtml}
+                            </tbody>
+                        </table>
+
+                        <h3>Payment Summary</h3>
+
+                        <p>Subtotal: {order.SubTotal:C}</p>
+                        <p>Delivery: {deliveryCost:C}</p>
+                        <h3>Total: {total:C}</h3>
+
+                        <h3>Secure Order Tracking</h3>
+
+                        <p>
+                            You can securely track your order using
+                            the following information:
+                        </p>
+
+                        <p><strong>Order ID:</strong> {order.Id}</p>
+
+                        <p><strong>Tracking Access Token:</strong></p>
+
+                        <p style='word-break:break-all;background:#f3f4f6;padding:12px;'>
+                            {System.Net.WebUtility.HtmlEncode(trackingToken)}
+                        </p>
+
+                        <p>
+                            Keep this token private.
+                            It is required to access your order details.
+                        </p>
+
+                        <p>Thank you for shopping with us!</p>
+
+                    </div>
+                </body>
+                </html>";
+        }
+
+        private static string GenerateOrderTrackingToken()
+        {
+            var tokenBytes = RandomNumberGenerator.GetBytes(32);
+
+            return Convert.ToBase64String(tokenBytes)
+                .TrimEnd('=')
+                .Replace('+', '-')
+                .Replace('/', '_');
+        }
+
+        private static string HashOrderTrackingToken(string token)
+        {
+            var tokenBytes = Encoding.UTF8.GetBytes(token);
+
+            var hashBytes = SHA256.HashData(tokenBytes);
+
+            return Convert.ToHexString(hashBytes);
         }
     }
 }

@@ -54,6 +54,11 @@ namespace E_commerce.Domain.Entities.Order
 
         public decimal SubTotal { get; private set; }
 
+        public bool ConfirmationEmailSent { get; set; } = false;
+
+        // Used for secure tracking through confirmation email
+        public string? EmailTrackingTokenHash { get; set; }
+
         public decimal GetTotal()
             => SubTotal + (DeliveryMethod?.Cost ?? 0m);
     }

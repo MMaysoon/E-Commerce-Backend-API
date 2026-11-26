@@ -161,6 +161,55 @@ namespace E_commerce.Application.Services
             return Result<IReadOnlyList<DeliveryMethodDto>>.Ok(_mapper.Map<IReadOnlyList<DeliveryMethodDto>>( deliveryMethods));
         }
 
+        public async Task<Result<OrderToReturnDto>> TrackOrderAsync(Guid orderId,string accessToken,CancellationToken cancellation = default)
+        {
+            if (string.IsNullOrWhiteSpace(accessToken))
+            {
+                return Result<OrderToReturnDto>.Fail(
+                    Error.Validation(
+                        "Order.AccessTokenRequired",
+                        "Order access token is required."));
+            }
+
+            var orderRepo = _unitOfWork.GetRepository<Order, Guid>();
+
+            var order = await orderRepo.GetByIdAsync(
+                new OrderTrackingSpecifications(orderId),
+                cancellation);
+
+            if (order == null)
+            {
+                return Result<OrderToReturnDto>.Fail(
+                    Error.NotFound(
+                        "Order.NotFound",
+                        "Order was not found."));
+            }
+
+            var tokenHash = HashOrderAccessToken(accessToken);
+
+            var isValidToken =IsTokenValid(tokenHash, order.OrderAccessTokenHash) ||
+                                (!string.IsNullOrEmpty(order.EmailTrackingTokenHash) &&
+                                 IsTokenValid(tokenHash, order.EmailTrackingTokenHash));
+
+            if (!isValidToken)
+            {
+                return Result<OrderToReturnDto>.Fail(
+                    Error.Failure(
+                        "Order.InvalidAccessToken",
+                        "Invalid order access token."));
+            }
+
+            var orderDto = _mapper.Map<OrderToReturnDto>(order);
+
+            return Result<OrderToReturnDto>.Ok(orderDto);
+        }
+
+        private static bool IsTokenValid(string tokenHash, string storedHash)
+        {
+            return CryptographicOperations.FixedTimeEquals(
+                Encoding.UTF8.GetBytes(tokenHash),
+                Encoding.UTF8.GetBytes(storedHash));
+        }
         private static string GenerateOrderAccessToken()
         {
             var tokenBytes = RandomNumberGenerator.GetBytes(32);

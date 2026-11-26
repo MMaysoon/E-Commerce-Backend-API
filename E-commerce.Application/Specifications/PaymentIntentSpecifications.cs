@@ -10,6 +10,11 @@ namespace E_commerce.Application.Specifications
     public class PaymentIntentSpecifications:BaseSpecifications<Order,Guid>
     {
         public PaymentIntentSpecifications (string PaymentIntentId)
-            :base(o => o.PaymentIntentId == PaymentIntentId) { }
+            :base(o => o.PaymentIntentId == PaymentIntentId)
+        {
+            AddInclude(o => o.Items);
+            AddInclude(o => o.DeliveryMethod);
+            AddInclude(o => o.ShipToAddress);
+        }
     }
 }
