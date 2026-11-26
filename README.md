@@ -693,8 +693,4 @@ Stripe__WebhookSecret
 
 ---
 
-<div align="center">
 
-**Built with ASP.NET Core and .NET 9**
-
-</div>
